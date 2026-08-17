@@ -126,6 +126,31 @@ services:
       retries: 8
       start_period: 10s
 
+  opspilot-remediation:
+    profiles: ["holmes"]
+    build:
+      context: .
+      dockerfile: mcp_servers/Dockerfile
+    command: ["python", "-m", "mcp_servers.remediation.server"]
+    ports:
+      - "8004:8004"
+    environment:
+      OPSPILOT_MCP_HOST: "0.0.0.0"
+      OPSPILOT_MCP_PORT: "8004"
+      OPSPILOT_ARTIFACT_DIR: /tmp/opspilot-artifacts
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import socket; socket.create_connection(('127.0.0.1', 8004), 3).close()",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+      start_period: 10s
+
   holmes:
     image: robustadev/holmes:0.39.0
     profiles: ["holmes"]
@@ -137,6 +162,8 @@ services:
       opspilot-deployments:
         condition: service_started
       opspilot-runbooks:
+        condition: service_started
+      opspilot-remediation:
         condition: service_started
     ports:
       - "5050:5050"
