@@ -1,0 +1,26 @@
+{
+  "failures": [
+    {
+      "service": "checkout",
+      "workflow": "checkout-ci",
+      "run_id": "1842",
+      "commit": "c3f91aa8",
+      "failed_at": "2026-08-17T10:12:00Z",
+      "failed_steps": [
+        {"name": "unit-tests", "error": "pricing scale assertion failed"}
+      ],
+      "log_excerpt": "token=super-secret FAILED tests/test_pricing.py"
+    },
+    {
+      "service": "payment",
+      "workflow": "payment-ci",
+      "run_id": "990",
+      "commit": "aa11bb22",
+      "failed_at": "2026-08-16T18:40:00Z",
+      "failed_steps": [
+        {"name": "integration", "error": "processor sandbox 503"}
+      ],
+      "log_excerpt": "processor sandbox unavailable"
+    }
+  ]
+}

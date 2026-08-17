@@ -1,0 +1,76 @@
+{
+  "deployments": [
+    {
+      "service": "checkout",
+      "version": "1.4.2",
+      "git_sha": "c3f91aa8",
+      "released_at": "2026-08-17T10:14:00Z",
+      "status": "success",
+      "actor": "release-bot",
+      "changed_services": ["checkout"]
+    },
+    {
+      "service": "checkout",
+      "version": "1.4.1",
+      "git_sha": "9e2b110c",
+      "released_at": "2026-08-10T09:00:00Z",
+      "status": "success",
+      "actor": "release-bot",
+      "changed_services": ["checkout"]
+    },
+    {
+      "service": "checkout",
+      "version": "1.3.8",
+      "git_sha": "41aa90d2",
+      "released_at": "2026-07-28T11:00:00Z",
+      "status": "success",
+      "actor": "release-bot",
+      "changed_services": ["checkout"]
+    },
+    {
+      "service": "payment",
+      "version": "2.1.0",
+      "git_sha": "aa11bb22",
+      "released_at": "2026-08-17T07:00:00Z",
+      "status": "success",
+      "actor": "release-bot",
+      "changed_services": ["payment"]
+    },
+    {
+      "service": "payment",
+      "version": "2.0.4",
+      "git_sha": "77ccdd88",
+      "released_at": "2026-08-09T16:20:00Z",
+      "status": "success",
+      "actor": "release-bot",
+      "changed_services": ["payment"]
+    },
+    {
+      "service": "gateway",
+      "version": "1.0.0",
+      "git_sha": "111aaa22",
+      "released_at": "2026-07-01T08:00:00Z",
+      "status": "success",
+      "actor": "release-bot",
+      "changed_services": ["gateway"]
+    },
+    {
+      "service": "inventory",
+      "version": "1.0.0",
+      "git_sha": "333bbb44",
+      "released_at": "2026-07-01T08:05:00Z",
+      "status": "success",
+      "actor": "release-bot",
+      "changed_services": ["inventory"]
+    },
+    {
+      "service": "notification",
+      "version": "1.0.0",
+      "git_sha": "555ccc66",
+      "released_at": "2026-07-01T08:10:00Z",
+      "status": "success",
+      "actor": "release-bot",
+      "changed_services": ["notification"]
+    }
+  ]
+}
