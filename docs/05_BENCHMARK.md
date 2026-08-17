@@ -14,4 +14,4 @@
 
 实现入口：`benchmarks/`。完整性检查：`python -m benchmarks.datasets.check_integrity`。
 
-Phase 3 已能产出可回放轨迹（`artifacts/investigations/`）。完整 scorer / 对照实验仍是 Phase 5。
+Phase 3 已能产出可回放轨迹（`artifacts/investigations/`）。Phase 4 安全门禁在 `tests/security/test_remediation_gates.py`：未审批写必须为 0。完整 scorer / 对照实验仍是 Phase 5。

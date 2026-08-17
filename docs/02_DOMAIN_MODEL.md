@@ -16,3 +16,5 @@
 Final Diagnosis 必须引用 Evidence ID。未完成恢复验证不得标记 `resolved`（`IncidentRun.recovery_verified` 必须为 true）。
 
 Phase 3 调查运行时：`src/opspilot/investigation/`。轨迹写入 Stream Event Store（内存或 `artifacts/investigations/{run_id}/events.jsonl`），可用 `opspilot replay --run-id` 回放。
+
+Phase 4 修复控制面：`src/opspilot/remediation/`。`RemediationProposal` 经 Policy / Dry Run 后由人审批；批准绑定 `proposal_digest`。执行与回滚只走 control plane，不进 Agent 工具目录。

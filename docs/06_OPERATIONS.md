@@ -36,12 +36,12 @@ make holmes-smoke
 
 Holmes HTTP: `http://localhost:5050/healthz`  
 Lab MCP: `http://localhost:8000/mcp`  
-Observability / Deployment / Runbook MCP: `8001` / `8002` / `8003`
+Observability / Deployment / Runbook / Remediation MCP: `8001` / `8002` / `8003` / `8004`
 
 Phase 2 工具测试（不接 LLM，不需要 lab）：
 
 ```bash
-python -m uv run pytest tests/unit tests/contract -q
+python -m uv run pytest tests/unit tests/contract tests/security -q
 ```
 
 ## Phase 3 Single-Agent
@@ -64,6 +64,28 @@ python -m uv run python -m opspilot.cli replay --run-id <run_id>
 
 轨迹目录：`artifacts/investigations/{run_id}/`。Ground truth 不会进入 prompt。写工具会被拒绝，失败 run 不会标成 `diagnosis_complete` / `resolved`。
 
+## Phase 4 安全修复控制面
+
+不接 LLM 的检查：
+
+```bash
+python -m uv run pytest tests/unit/test_remediation_service.py tests/security/test_remediation_gates.py tests/contract/test_phase4_tool_contracts.py -q
+```
+
+API（control plane，不给 Agent）：
+
+```text
+POST /api/incidents/{run_id}/proposals
+POST /api/proposals/{id}/dry-run
+POST /api/proposals/{id}/approve   # body: actor_id, actor_role, proposal_digest
+POST /api/proposals/{id}/reject
+POST /api/proposals/{id}/execute   # 人类 + digest；Agent 目录里没有这个工具
+POST /api/proposals/{id}/rollback
+POST /api/proposals/{id}/verify
+```
+
+Holmes 只加载 propose / dry-run / verify。`execute_approved_proposal` 与 `rollback_execution` 不注册到 Remediation MCP。
+
 Live `/api/chat` 需要 `.env` 中的 Azure 凭证。没有凭证时，容器健康检查仍应通过。Phase 0 已在有凭证的本机验收通过；复验步骤见 `docs/HANDOFF.md`。
 
 ```bash
@@ -79,7 +101,7 @@ make holmes-down
 | 1 | 事故模拟 S01–S04 | 已完成（不接 LLM） |
 | 2 | MCP 工具 | 已完成（Observability / Deployment / Runbook，只读） |
 | 3 | Single-Agent 调查 | 已完成（单元/契约测试覆盖 S01–S04；live Azure 手动） |
-| 4 | 安全修复控制面 | 策略骨架已有 |
+| 4 | 安全修复控制面 | 已完成（Proposal → Policy → Dry Run → Approval → Executor） |
 | 5+ | Benchmark / Verifier / SFT | 门禁见 `AGENTS.md` |
 
 升级 Holmes 版本必须先跑兼容性测试，再改 `config/holmesgpt.pin`。

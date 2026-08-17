@@ -35,3 +35,18 @@
 - Runbook 结果标记为 untrusted，不能覆盖审批或写权限
 
 实现：`mcp_servers/observability|deployments|runbooks`。测试：`tests/unit/test_*_tools.py`、`tests/contract/test_phase2_*.py`、`tests/contract/test_azure_schema_suite.py`。
+
+## Phase 4 已实现（Propose / 只读验证）
+
+| Server | Agent-visible | 端口 |
+|---|---|---|
+| remediation | `propose_rollback_deployment`, `propose_restart_workload`, `propose_scale_workload`, `propose_update_config`, `dry_run_remediation`, `verify_recovery`, `get_remediation_capabilities`, `get_resource_snapshot` | 8004 |
+
+`propose_*` 只创建 Proposal，不改集群。`update_config` 可提议，但 Phase 4 policy 拒绝执行（typed action 仅 rollback / restart / scale）。
+
+Control plane only（**不**注册到 Holmes / FastMCP）：
+
+- `execute_approved_proposal`
+- `rollback_execution`
+
+批准必须携带当前 `proposal_digest`。参数变化、过期、已执行、被篡改的 Proposal 不能再跑。测试：`tests/unit/test_remediation_*.py`、`tests/contract/test_phase4_*.py`、`tests/security/test_remediation_gates.py`。

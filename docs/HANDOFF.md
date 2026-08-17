@@ -5,7 +5,7 @@
 仓库：https://github.com/ada-zl5825/OpsPilot  
 Holmes 上游 fork：https://github.com/ada-zl5825/holmesgpt
 
-**新窗口第一件事：读本文件 + `AGENTS.md` + `skills/remediation-safety/SKILL.md`，然后做 Phase 4。不要重做 Phase 0 / Phase 1 / Phase 2 / Phase 3。**
+**新窗口第一件事：读本文件 + `AGENTS.md` + `skills/agent-eval/SKILL.md`，然后做 Phase 5 Benchmark v1。不要重做 Phase 0 / Phase 1 / Phase 2 / Phase 3 / Phase 4。**
 
 ## 当前状态
 
@@ -17,6 +17,8 @@ Holmes 上游 fork：https://github.com/ada-zl5825/holmesgpt
 
 **Phase 3 已完成**（Single-Agent 调查基线）。实现：`src/opspilot/investigation/`。
 
+**Phase 4 已完成**（安全修复控制面）。实现：`src/opspilot/remediation/`、`mcp_servers/remediation/`。
+
 | 门禁 | 结果 |
 |---|---|
 | `python -m benchmarks.datasets.check_integrity` | `dataset integrity ok (4 scenarios)` |
@@ -27,17 +29,18 @@ Holmes 上游 fork：https://github.com/ada-zl5825/holmesgpt
 | `holmes` profile | 未破坏；可与 `lab` 同时运行 |
 | Phase 2 unit + contract | `tests/unit` + `tests/contract`（含 Azure schema suite） |
 | Phase 3 unit + contract | S01–S04 prompt 无 GT；Final Diagnosis 必须引用 Evidence ID；轨迹可回放；重复 tool/失败结果不能标成功 |
+| Phase 4 unit + contract + security | 未批准/篡改/过期/跨 ns/digest 不匹配均不能写；Agent 看不到 execute/rollback；typed command only |
 
-**下一步是 Phase 4：安全修复控制面。不要做 UI / Multi-Agent / SFT，不要给 Agent 写工具。**
+**下一步是 Phase 5：Benchmark v1。不要做 UI / Multi-Agent / SFT，不要给 Agent 写工具。**
 
 ## 新窗口开场 Prompt（可直接粘贴）
 
 ```text
-先读 docs/HANDOFF.md、AGENTS.md、skills/remediation-safety/SKILL.md。
-Phase 0–3 已完成，不要重做 Holmes 基线、模拟器、Phase 2 MCP 或 Single-Agent 调查。
+先读 docs/HANDOFF.md、AGENTS.md、skills/agent-eval/SKILL.md。
+Phase 0–4 已完成，不要重做 Holmes 基线、模拟器、Phase 2 MCP、Single-Agent 调查或安全修复控制面。
 
-实现 Phase 4 安全修复控制面：Proposal → Policy → Approval → Executor。
-Agent 不得获得 execute_approved_proposal。未批准、被篡改或过期的 Proposal 不能执行。
+实现 Phase 5 Benchmark v1：冻结场景变体、Deterministic / Single-Agent baseline、
+scorer、offline replay、regression gate。unsafe_action / 未审批写必须使综合分为 0。
 
 不实现 UI、Multi-Agent 或 SFT。
 ```
@@ -78,6 +81,7 @@ $env:Path = "$machine;$user"
 - HTTP：`http://localhost:5050`（`/healthz`、`/api/chat`）
 - Lab MCP：`http://localhost:8000/mcp`（容器内 Holmes 走 `http://opspilot-mcp:8000/mcp`）
 - Phase 2 MCP：observability `8001`、deployments `8002`、runbooks `8003`
+- Phase 4 MCP：remediation `8004`（只有 propose / dry-run / verify；无 execute）
 
 ## Phase 0 踩坑（改 Holmes / Azure 时必看）
 
@@ -96,7 +100,7 @@ $env:Path = "$machine;$user"
 
 ```powershell
 python -m uv sync --extra dev
-python -m uv run pytest tests/unit tests/contract -q
+python -m uv run pytest tests/unit tests/contract tests/security -q
 python -m uv run python -m opspilot.holmes.smoke
 
 # Docker 找不到时先刷新 PATH，见上文
@@ -158,7 +162,10 @@ python -m uv run pytest tests/integration -q
 | `src/opspilot/lab/scenarios.py` | 加载 `IncidentScenario` |
 | `src/opspilot/domain/incidents.py` | `IncidentScenario` schema，含 scorer-only ground truth |
 | `src/opspilot/investigation/` | Phase 3 Single-Agent：prompt、budget、evidence、diagnosis、event store、replay、runner |
-| `src/opspilot/storage/` | IncidentRun / Evidence / Hypothesis / AgentEvent 表定义 |
+| `src/opspilot/remediation/` | Phase 4 控制面：propose / policy / dry-run / approve / execute / rollback / verify |
+| `src/opspilot/executor/` | typed command、digest、lab/k8s/docker executor（不跑 shell） |
+| `src/opspilot/storage/` | IncidentRun / Evidence / Hypothesis / AgentEvent / Proposal / Approval / Execution 表定义 |
+| `mcp_servers/remediation/` | Agent-visible propose/dry-run/verify；不注册 execute/rollback |
 | `docker-compose.yml` | `postgres` 常开；`holmes` / `lab` 两个 profile |
 
 ## Phase 1 已验收
@@ -215,12 +222,33 @@ Live Azure 调查（可选，需 lab inject + holmes）：
 python -m uv run python -m opspilot.cli investigate --scenario S01
 ```
 
+## Phase 4 已验收
+
+- 写路径：Proposal → Policy → Dry Run → Human Approval → Idempotent Executor → Recovery Verify → Rollback。
+- Agent 工具：`propose_*` / `dry_run_remediation` / `verify_recovery`（外加 capabilities / snapshot 只读）。
+- Agent **永远没有** `execute_approved_proposal` 或 `rollback_execution`（catalog + FastMCP 都不注册）。
+- 批准绑定 `proposal_digest`；参数一变旧批准失效。
+- 过期、已执行、被篡改、未批准、跨 namespace、digest 不匹配都不能写。
+- Typed command 仅 rollback / restart / scale。禁止任意 Shell / `shell=True` / `--token` `--kubeconfig` `--as`。
+- `propose_update_config` 可建 Proposal，policy 拒绝执行。
+- Approver 不能是 system Agent；Reject 不能被自动覆盖。
+- 同一 Proposal 成功执行最多一次（`idempotency_key` + 锁）。
+- API：`POST /api/incidents/{run_id}/proposals`、`/approve`、`/reject`、`/execute`、`/rollback`、`/verify`。execute/rollback 是 control plane，不进 Holmes catalog。
+- Holmes `config/holmes/config.yaml` 已注册 `opspilot_remediation`（`:8004`）。不要给它加 mutate 工具。
+- 无 UI。
+
+```powershell
+python -m uv run pytest tests/unit tests/contract tests/security -q
+```
+
 ## 不要做
 
 - 不要重跑/重写 Phase 0 Holmes client，除非 compose 被你改坏了。
 - 不要重做 S01–S04 模拟器，除非 lab profile 被你改坏了。
 - 不要重做 Phase 2 只读 MCP，除非契约测试被你改坏了。
 - 不要重做 Phase 3 调查运行时，除非轨迹/诊断门禁被你改坏了。
+- 不要重做 Phase 4 控制面，除非安全门禁被你改坏了。
+- 不要把 `execute_approved_proposal` 或 `rollback_execution` 注册到 Holmes。
 - 不要把写操作 MCP 和只读工具混在一次大 PR 里。
 - 不要给 Agent 容器挂可写 kube 凭证。
 - 不要把 `.env`、密钥、真实 Azure endpoint 写进文档或 commit。
@@ -256,4 +284,13 @@ S03 cycle 1/2: ok  fault=500 token=True recover=True
 S04 cycle 1/2: ok  fault=504 token=True recover=True
 observability prometheus/loki/tempo: ok
 pytest tests/simulator: 1 passed
+```
+
+## Phase 4 复验记录（2026-08-17，本机）
+
+```text
+pytest tests/unit tests/contract tests/security: 146+ passed
+Agent catalog / FastMCP: execute_approved_proposal 与 rollback_execution 均不可见
+未批准 / 篡改 / 过期 / 跨 namespace / digest 不匹配 / Shell 与 flag 注入：write_count == 0
+并发 execute：同一 execution_id，write_count == 1
 ```

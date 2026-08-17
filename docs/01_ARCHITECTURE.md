@@ -42,7 +42,7 @@ LLM 文本不能直接跨越 deterministic boundary 执行写操作。
 
 ## OTel 布局
 
-Phase 3 已挂 `incident.run` / `holmes.investigation`（无 provider 时为 no-op）。修复路径 span 仍待 Phase 4。
+Phase 3 已挂 `incident.run` / `holmes.investigation`。Phase 4 已挂 `remediation.policy` / `remediation.approval` / `remediation.execute` / `recovery.verify`（无 provider 时为 no-op）。
 
 ```text
 incident.run
