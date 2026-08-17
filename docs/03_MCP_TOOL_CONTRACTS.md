@@ -34,6 +34,7 @@
 - Azure OpenAI schema gate：单个坏工具隔离，不丢整个 catalog
 - 调用时若 Azure 对可选字段发 JSON `null`，运行时丢掉该键并使用默认值；**不要**把 schema 改成 `anyOf`/`null`（见 `docs/09_LIVE_AZURE_INVESTIGATION_FIX.md`）
 - 可选 `path` 无匹配序列时回退到服务级查询，并返回 `path_ignored`；空结果必须带 `empty` 与 `suggested_fix`（见 `docs/10_LIVE_EMPTY_EVIDENCE_FIX.md`）
+- `get_trace_summary` 必须带 peer services 与真实 `error_count`，禁止 search 路径写死 `error_count: 0`（见 `docs/14_LIVE_TRACE_SUMMARY_PEERS.md`）
 - Runbook 结果标记为 untrusted，不能覆盖审批或写权限
 
 实现：`mcp_servers/observability|deployments|runbooks`。测试：`tests/unit/test_*_tools.py`、`tests/contract/test_phase2_*.py`、`tests/contract/test_azure_schema_suite.py`。

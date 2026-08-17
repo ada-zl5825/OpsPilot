@@ -15,6 +15,7 @@ from mcp_servers.observability.backends import (
     render_metric_query,
 )
 from mcp_servers.observability.fakes import FakeLogsBackend, FakeMetricsBackend, FakeTracesBackend
+from mcp_servers.observability.traces import aggregate_trace_summary
 from mcp_servers.observability.schemas import LogQueryInput, MetricQueryInput, TraceSummaryInput
 
 
@@ -164,22 +165,25 @@ def get_trace_summary(
             limit=parsed.limit,
         )
         durations = [int(item.get("duration_ms", 0)) for item in traces]
+        summary = aggregate_trace_summary(traces)
+        summary["p95_duration_ms"] = _percentile(durations, 0.95)
         payload: dict[str, Any] = {
             "ok": True,
             "tool": tool,
             "time_range": window.as_dict(),
             "returned": len(traces),
             "empty": not traces,
-            "summary": {
-                "count": len(traces),
-                "p95_duration_ms": _percentile(durations, 0.95),
-                "error_traces": sum(int(item.get("error_count", 0) > 0) for item in traces),
-            },
+            "summary": summary,
             "traces": traces,
         }
         if not traces:
             payload["suggested_fix"] = (
                 "widen the window or omit min_duration_ms; empty traces are not a healthy signal"
+            )
+        elif summary.get("peer_services"):
+            payload["suggested_fix"] = (
+                "trace peers list other services on the same request; "
+                "query those services if the selected service has empty logs or only mirrored 5xx"
             )
         return apply_window_flags(payload, window)
 

@@ -43,6 +43,8 @@ If an optional path filter matches no series, retry without path and set `path_i
 
 When `LAB_CONTROLLER_URL` is set, raise query `start` to `injected_at − 5s`. See `docs/12_LIVE_CROSS_SCENARIO_RESIDUE.md` and `docs/13_LIVE_QUIET_BEFORE_INJECT.md`.
 
+`get_trace_summary` must expose peer services and real span error counts. Do not hardcode `error_count: 0` on Tempo search hits. See `docs/14_LIVE_TRACE_SUMMARY_PEERS.md`.
+
 ## Tests
 
 - Unit: bounds, truncation, redaction, error shape

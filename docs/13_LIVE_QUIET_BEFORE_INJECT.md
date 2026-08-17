@@ -91,3 +91,5 @@ python -m uv run python -m benchmarks.cli --live --out artifacts/benchmarks-live
 | S02 | 不再因为上场 error 行而稳 0；真分开 cache 才能上分 |
 | S03 | 仍应 ≥ 0.7；窗内不应再混进上场 wait |
 | S04 | 0 只应出现在没看 trace / 没点到 payment 时 |
+
+复验 `32631ef9`：S02/S03 已分开；S04 点到 deadline 但写成 gateway。后续见 `docs/14_LIVE_TRACE_SUMMARY_PEERS.md`。

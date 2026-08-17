@@ -8,6 +8,11 @@ import httpx
 from mcp_servers.common.errors import BackendError
 from mcp_servers.common.time_range import TimeWindow
 from mcp_servers.observability.schemas import MetricQueryInput
+from mcp_servers.observability.traces import (
+    enrich_longest_traces,
+    search_hits_to_summaries,
+    summarize_otlp_trace,
+)
 
 _PATH_SAFE = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/_-.:")
 
@@ -173,50 +178,14 @@ class LiveTracesBackend:
             params["minDuration"] = f"{min_duration_ms}ms"
         payload = _get_json(self._base_url, "/api/search", params, self._timeout)
         traces = payload.get("traces", [])
-        summaries: list[dict[str, Any]] = []
-        for item in traces[:limit]:
-            summaries.append(
-                {
-                    "trace_id": item.get("traceID") or item.get("trace_id"),
-                    "root_service": item.get("rootServiceName") or service,
-                    "root_name": item.get("rootTraceName") or "",
-                    "duration_ms": int(item.get("durationMs") or 0),
-                    "span_count": int(item.get("spanSet", {}).get("matched", 0) or 0),
-                    "error_count": 0,
-                    "services": [service] if service else [],
-                }
-            )
-        return summaries
+        if not isinstance(traces, list):
+            traces = []
+        summaries = search_hits_to_summaries(traces, service=service, limit=limit)
+        return enrich_longest_traces(summaries, self._by_id)
 
     def _by_id(self, trace_id: str) -> dict[str, Any]:
         payload = _get_json(self._base_url, f"/api/traces/{trace_id}", {}, self._timeout)
-        batches = payload.get("batches") or payload.get("resourceSpans") or []
-        services: list[str] = []
-        span_count = 0
-        duration_ms = 0
-        for batch in batches:
-            resource = batch.get("resource", {})
-            for attr in resource.get("attributes", []):
-                if attr.get("key") == "service.name":
-                    services.append(str(attr.get("value", {}).get("stringValue", "")))
-            spans = batch.get("scopeSpans") or batch.get("instrumentationLibrarySpans") or []
-            for scope in spans:
-                items = scope.get("spans", [])
-                span_count += len(items)
-                for span in items:
-                    start = int(span.get("startTimeUnixNano") or 0)
-                    end = int(span.get("endTimeUnixNano") or 0)
-                    if end > start:
-                        duration_ms = max(duration_ms, int((end - start) / 1_000_000))
-        return {
-            "trace_id": trace_id,
-            "root_service": services[0] if services else "",
-            "root_name": "",
-            "duration_ms": duration_ms,
-            "span_count": span_count,
-            "error_count": 0,
-            "services": [name for name in services if name],
-        }
+        return summarize_otlp_trace(trace_id, payload)
 
 
 def live_backends(timeout: float) -> tuple[LiveMetricsBackend, LiveLogsBackend, LiveTracesBackend]:

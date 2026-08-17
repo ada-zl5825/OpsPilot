@@ -81,6 +81,14 @@ class FakeTracesBackend:
                 "span_count": 6,
                 "error_count": 1,
                 "services": ["gateway", "checkout", "payment"],
+                "peer_services": ["gateway", "payment"],
+                "slowest_span": {
+                    "name": "checkout.payment",
+                    "service": "checkout",
+                    "duration_ms": 1900,
+                    "peer_service": "payment",
+                },
+                "enriched": True,
             },
             {
                 "trace_id": "11223344556677889900aabbccddeeff",
@@ -90,6 +98,8 @@ class FakeTracesBackend:
                 "span_count": 3,
                 "error_count": 0,
                 "services": ["payment"],
+                "peer_services": [],
+                "enriched": True,
             },
         ]
 

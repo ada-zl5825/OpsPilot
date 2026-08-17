@@ -250,3 +250,5 @@ def test_get_trace_summary_filters_by_duration(tmp_path: Path) -> None:
     assert result["returned"] == 1
     assert result["traces"][0]["duration_ms"] == 2100
     assert result["summary"]["count"] == 1
+    assert "payment" in result["summary"]["peer_services"]
+    assert result["summary"]["error_traces"] == 1
