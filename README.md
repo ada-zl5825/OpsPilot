@@ -6,9 +6,12 @@ OpsPilot does not reimplement the HolmesGPT agent loop. This repo owns the incid
 
 ## Current status
 
-**Initialized.** Domain models, API skeleton, MCP catalog contract, docs, and Cursor skills are in place. Next: **Phase 0** — pin HolmesGPT `0.39.0`, parse stream events, prove approval + Azure schema compatibility.
+**Phase 0 complete.** HolmesGPT is pinned to `robustadev/holmes:0.39.0` (`config/holmesgpt.pin`). Live Azure `/api/chat`, MCP `lab_status`, and `approval_required_tools` are verified. Next: Phase 1 simulator. New window: start from [`docs/HANDOFF.md`](docs/HANDOFF.md).
 
-HolmesGPT pin: `robustadev/holmes:0.39.0` (see `config/holmesgpt.pin`). Never use `:latest`.
+```bash
+make holmes-up
+make holmes-smoke
+```
 
 ## Quick start
 

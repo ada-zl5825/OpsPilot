@@ -1,4 +1,4 @@
-.PHONY: install lint format typecheck test test-unit test-contract up down smoke
+.PHONY: install lint format typecheck test test-unit test-contract up down smoke holmes-up holmes-down holmes-smoke
 
 UV ?= python -m uv
 
@@ -28,6 +28,15 @@ up:
 
 down:
 	docker compose down
+
+holmes-up:
+	docker compose --profile holmes up -d --build
+
+holmes-down:
+	docker compose --profile holmes down
+
+holmes-smoke:
+	$(UV) run python -m opspilot.holmes.smoke
 
 smoke:
 	$(UV) run ruff check .

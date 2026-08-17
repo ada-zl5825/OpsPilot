@@ -1,4 +1,4 @@
-# Phase 0 baseline: PostgreSQL + pinned HolmesGPT.
+# Phase 0 baseline: PostgreSQL + pinned HolmesGPT + lab MCP.
 # Observability stack and simulator services arrive in Phase 1.
 # Never use floating :latest tags.
 
@@ -19,18 +19,60 @@ services:
       timeout: 5s
       retries: 10
 
+  opspilot-mcp:
+    profiles: ["holmes"]
+    build:
+      context: ./mcp_servers/lab
+    ports:
+      - "8000:8000"
+    environment:
+      OPSPILOT_LAB_HOST: "0.0.0.0"
+      OPSPILOT_LAB_PORT: "8000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import socket; socket.create_connection(('127.0.0.1', 8000), 3).close()",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+      start_period: 10s
+
   holmes:
     image: robustadev/holmes:0.39.0
     profiles: ["holmes"]
-    environment:
-      AZURE_API_BASE: ${AZURE_OPENAI_ENDPOINT:-}
-      AZURE_API_KEY: ${AZURE_OPENAI_API_KEY:-}
-      AZURE_API_VERSION: ${AZURE_OPENAI_API_VERSION:-2024-10-21}
+    depends_on:
+      opspilot-mcp:
+        condition: service_started
     ports:
-      - "8080:8080"
+      - "5050:5050"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      HOLMES_HOST: "0.0.0.0"
+      HOLMES_PORT: "5050"
+      MODEL_LIST_FILE_LOCATION: /etc/holmes/model_list.yaml
+      AZURE_API_KEY: ${AZURE_OPENAI_API_KEY:-}
+      AZURE_API_BASE: ${AZURE_OPENAI_ENDPOINT:-}
+      AZURE_API_VERSION: ${AZURE_OPENAI_API_VERSION:-2024-10-21}
+      HOLMES_MODEL: azure/${AZURE_OPENAI_DEPLOYMENT:-gpt-4o}
+      OVERRIDE_MAX_OUTPUT_TOKEN: "4096"
+      OVERRIDE_MAX_CONTENT_SIZE: "128000"
+      LOG_LEVEL: INFO
     volumes:
-      - ./config/holmes:/etc/holmes:ro
-    command: ["python", "server.py"]
+      - ./config/holmes/config.yaml:/root/.holmes/config.yaml:ro
+      - ./config/holmes/model_list.yaml:/etc/holmes/model_list.yaml:ro
+    # Image default ENTRYPOINT is the CLI. Override to the HTTP server.
+    entrypoint: ["python", "-u", "server.py"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:5050/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 20s
 
 volumes:
   opspilot_pg:

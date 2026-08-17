@@ -1,0 +1,11 @@
+event: ai_message
+data: {"content":"I want to call the mutate probe."}
+
+event: start_tool_calling
+data: {"tool_name":"lab_mutate_probe","id":"call_mut_1"}
+
+event: tool_calling_result
+data: {"tool_call_id":"call_mut_1","role":"tool","name":"lab_mutate_probe","result":{"status":"approval_required","data":null,"error":null,"params":{"target":"lab"}}}
+
+event: approval_required
+data: {"requires_approval":true,"pending_approvals":[{"tool_call_id":"call_mut_1","tool_name":"lab_mutate_probe","description":"mutate probe","params":{"target":"lab"}}],"pending_frontend_tool_calls":[],"conversation_history":[{"role":"user","content":"mutate"}]}

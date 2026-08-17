@@ -16,6 +16,16 @@ class AzureSchemaReport(BaseModel):
     issues: list[AzureSchemaIssue] = Field(default_factory=list)
 
 
+class CatalogCompatibilityReport(BaseModel):
+    compatible_tools: list[str] = Field(default_factory=list)
+    isolated_incompatible_tools: list[str] = Field(default_factory=list)
+    issues: list[AzureSchemaIssue] = Field(default_factory=list)
+
+    @property
+    def catalog_usable(self) -> bool:
+        return bool(self.compatible_tools)
+
+
 _UNSUPPORTED_KEYS = frozenset({"oneOf", "anyOf", "allOf", "not", "$ref"})
 
 
@@ -24,6 +34,25 @@ def validate_tool_schema_for_azure(tool_name: str, schema: dict[str, Any]) -> Az
     issues: list[AzureSchemaIssue] = []
     _walk(tool_name, schema, "$", issues)
     return AzureSchemaReport(compatible=not issues, issues=issues)
+
+
+def evaluate_catalog(schemas: dict[str, dict[str, Any]]) -> CatalogCompatibilityReport:
+    """A single bad tool is isolated; remaining tools stay loadable."""
+    compatible: list[str] = []
+    isolated: list[str] = []
+    issues: list[AzureSchemaIssue] = []
+    for name, schema in schemas.items():
+        report = validate_tool_schema_for_azure(name, schema)
+        if report.compatible:
+            compatible.append(name)
+        else:
+            isolated.append(name)
+            issues.extend(report.issues)
+    return CatalogCompatibilityReport(
+        compatible_tools=compatible,
+        isolated_incompatible_tools=isolated,
+        issues=issues,
+    )
 
 
 def _walk(

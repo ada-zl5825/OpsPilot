@@ -57,6 +57,9 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 testpaths = ["tests"]
 asyncio_mode = "auto"
 pythonpath = ["src"]
+markers = [
+    "integration: needs a running Holmes container",
+]
 
 [tool.mypy]
 python_version = "3.12"

@@ -10,7 +10,9 @@ class Settings(BaseSettings):
 
     holmes_version: str = "0.39.0"
     holmes_image: str = "robustadev/holmes:0.39.0"
-    holmes_base_url: str = "http://localhost:8080"
+    holmes_base_url: str = "http://localhost:5050"
+    holmes_model: str = "azure/gpt-4o"
+    holmes_model_name: str = "azure-default"
 
     azure_openai_endpoint: str | None = None
     azure_openai_api_key: str | None = None
@@ -20,6 +22,9 @@ class Settings(BaseSettings):
     prometheus_url: str = "http://localhost:9090"
     loki_url: str = "http://localhost:3100"
     tempo_url: str = "http://localhost:3200"
+
+    def azure_configured(self) -> bool:
+        return bool(self.azure_openai_api_key and self.azure_openai_endpoint)
 
 
 def get_settings() -> Settings:

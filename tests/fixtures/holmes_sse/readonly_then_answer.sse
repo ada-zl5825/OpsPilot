@@ -1,0 +1,14 @@
+event: ai_message
+data: {"content":"I will check lab status.","metadata":{"usage":{"prompt_tokens":120,"completion_tokens":20,"total_tokens":140}}}
+
+event: start_tool_calling
+data: {"tool_name":"lab_status","id":"call_lab_1"}
+
+event: tool_calling_result
+data: {"tool_call_id":"call_lab_1","role":"tool","name":"lab_status","result":{"status":"success","data":"{\"ok\":true,\"verification_code\":\"OP-P0-LAB\"}","error":null,"params":{}}}
+
+event: token_count
+data: {"metadata":{"usage":{"prompt_tokens":200,"completion_tokens":40,"total_tokens":240}}}
+
+event: ai_answer_end
+data: {"analysis":"Lab is healthy. verification_code=OP-P0-LAB","conversation_history":[{"role":"user","content":"check lab"}],"metadata":{"usage":{"prompt_tokens":200,"completion_tokens":40,"total_tokens":240}}}

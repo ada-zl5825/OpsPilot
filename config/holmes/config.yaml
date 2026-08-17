@@ -1,0 +1,32 @@
+# HolmesGPT runtime config for OpsPilot Phase 0.
+# Secrets stay in environment variables / model_list env templates.
+
+model: azure-default
+max_steps: 8
+
+toolsets:
+  kubernetes/core:
+    enabled: false
+  kubernetes/logs:
+    enabled: false
+  kubernetes/live-metrics:
+    enabled: false
+  docker/core:
+    enabled: false
+  bash:
+    enabled: false
+  internet:
+    enabled: true
+
+mcp_servers:
+  opspilot_lab:
+    description: "OpsPilot Phase 0 lab MCP — read-only probes plus an approval-gated mutate probe"
+    config:
+      url: "http://opspilot-mcp:8000/mcp"
+      mode: streamable-http
+    approval_required_tools:
+      - lab_mutate_probe
+    llm_instructions: >
+      Use opspilot_lab for Phase 0 connectivity checks.
+      Call lab_status or lab_echo for read-only evidence.
+      lab_mutate_probe requires human approval and must not be treated as already executed.

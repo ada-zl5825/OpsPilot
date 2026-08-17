@@ -14,14 +14,17 @@ HolmesGPT is the Agent runtime. OpsPilot talks to it over HTTP/container. Do not
 - Reject `:latest` and unpinned digests
 - Upgrade only after contract tests in `src/opspilot/holmes/compatibility.py` plus stream/approval smoke
 
-## Phase 0 work
+## Phase 0 work (done 2026-08-17)
 
-1. Run Holmes in Compose (`docker compose --profile holmes up`)
-2. Call Azure OpenAI through Holmes, one builtin read-only toolset
-3. Call one custom MCP tool
+Do not redo this unless the pin or compose contract breaks. See `docs/HANDOFF.md`.
+
+1. Run Holmes in Compose (`make holmes-up`) — image entrypoint is CLI; Compose must use `python -u server.py`. Mount config to `/root/.holmes/config.yaml` (0.39.0 does not honor `HOLMES_CONFIG_PATH`).
+2. Call Azure OpenAI through Holmes, one builtin read-only toolset (`internet`) plus `opspilot_lab`
+3. Call `lab_status` / `lab_echo`
 4. Capture stream events: LLM turn, tool call, tool result, approval, token usage, final answer
-5. Prove `approval_required_tools` blocks unapproved execution
-6. Write `docs/UPSTREAM_BASELINE.md` with the exact tag, passing tests, and residual risks
+5. Prove `approval_required_tools` blocks `lab_mutate_probe` and that OpsPilot never auto-approves
+6. Keep `docs/UPSTREAM_BASELINE.md` current with pin, digest, tests, and residual risks
+7. Never add `health_check_tool` to the 0.39.0 MCP toolset config; it is rejected and drops `opspilot_lab`
 
 ## Code map
 

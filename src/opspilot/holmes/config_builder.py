@@ -5,6 +5,7 @@ from typing import Any
 from opspilot.settings import Settings
 
 PINNED_HOLMES_IMAGE = "robustadev/holmes:0.39.0"
+PINNED_HOLMES_PORT = 5050
 
 
 def build_holmes_runtime_config(settings: Settings) -> dict[str, Any]:
@@ -16,4 +17,7 @@ def build_holmes_runtime_config(settings: Settings) -> dict[str, Any]:
         "version": settings.holmes_version,
         "base_url": settings.holmes_base_url,
         "model_provider": "azure_openai",
+        "model": settings.holmes_model,
+        "http_port": PINNED_HOLMES_PORT,
+        "mcp_server": "opspilot_lab",
     }
