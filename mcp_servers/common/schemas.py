@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+from mcp_servers.common.null_args import drop_null_arguments
 
 SERVICE_NAMES = ("gateway", "checkout", "payment", "inventory", "notification")
 ServiceName = Literal["gateway", "checkout", "payment", "inventory", "notification"]
@@ -13,6 +15,13 @@ _UNSUPPORTED = frozenset({"oneOf", "anyOf", "allOf", "not", "$ref"})
 
 class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _drop_json_nulls(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            return drop_null_arguments(data)
+        return data
 
 
 def azure_input_schema(model: type[BaseModel]) -> dict[str, Any]:

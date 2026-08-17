@@ -2,9 +2,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from mcp.server.fastmcp import FastMCP
-
-from mcp_servers.common.http_server import run_streamable_http
+from mcp_servers.common.http_server import create_mcp, run_streamable_http
 from mcp_servers.common.runtime import ToolRuntime
 from mcp_servers.remediation.tools import (
     dry_run_remediation as dry_run_remediation_impl,
@@ -31,7 +29,7 @@ from mcp_servers.remediation.tools import (
     verify_recovery as verify_recovery_impl,
 )
 
-mcp = FastMCP("opspilot-remediation")
+mcp = create_mcp("opspilot-remediation")
 
 _Service = Literal["gateway", "checkout", "payment", "inventory", "notification"]
 _Namespace = Literal["lab"]

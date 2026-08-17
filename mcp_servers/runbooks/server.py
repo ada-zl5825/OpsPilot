@@ -2,13 +2,11 @@ from __future__ import annotations
 
 from typing import Literal
 
-from mcp.server.fastmcp import FastMCP
-
-from mcp_servers.common.http_server import run_streamable_http
+from mcp_servers.common.http_server import create_mcp, run_streamable_http
 from mcp_servers.common.runtime import ToolRuntime
 from mcp_servers.runbooks.tools import search_runbooks as search_runbooks_impl
 
-mcp = FastMCP("opspilot-runbooks")
+mcp = create_mcp("opspilot-runbooks")
 
 _ServiceOrAll = Literal["all", "gateway", "checkout", "payment", "inventory", "notification"]
 

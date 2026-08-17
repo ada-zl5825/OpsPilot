@@ -3,9 +3,7 @@ from __future__ import annotations
 import os
 from typing import Literal
 
-from mcp.server.fastmcp import FastMCP
-
-from mcp_servers.common.http_server import run_streamable_http
+from mcp_servers.common.http_server import create_mcp, run_streamable_http
 from mcp_servers.common.runtime import ToolRuntime
 from mcp_servers.observability.backends import live_backends
 from mcp_servers.observability.fakes import FakeLogsBackend, FakeMetricsBackend, FakeTracesBackend
@@ -19,7 +17,7 @@ from mcp_servers.observability.tools import (
     query_service_metrics as query_service_metrics_impl,
 )
 
-mcp = FastMCP("opspilot-observability")
+mcp = create_mcp("opspilot-observability")
 
 _Service = Literal["gateway", "checkout", "payment", "inventory", "notification"]
 _Metric = Literal[
@@ -54,7 +52,7 @@ def query_service_metrics(
     path: str = "",
     limit: int = 60,
 ) -> dict[str, object]:
-    """Read a typed service metric. Time range and limit are required. No free-form PromQL."""
+    """Read a typed service metric. Omit path unless a prior result showed that label."""
     metrics, _, _ = _backends()
     return query_service_metrics_impl(
         {
@@ -80,7 +78,7 @@ def query_service_logs(
     contains: str = "",
     limit: int = 50,
 ) -> dict[str, object]:
-    """Read filtered service logs. Server-side severity/contains filter; secrets are redacted."""
+    """Read filtered service logs. Zero lines is not proof of no incident."""
     _, logs, _ = _backends()
     return query_service_logs_impl(
         {

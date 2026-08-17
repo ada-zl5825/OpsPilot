@@ -5,11 +5,12 @@ from typing import Any
 from pydantic import ValidationError
 
 from mcp_servers.common.errors import structured_error
+from mcp_servers.common.null_args import drop_null_arguments
 from mcp_servers.common.time_range import TimeWindow, parse_time_range
 
 
 def parse_model(model_type: type[Any], params: dict[str, Any]) -> Any:
-    return model_type.model_validate(params)
+    return model_type.model_validate(drop_null_arguments(params))
 
 
 def validation_failure(

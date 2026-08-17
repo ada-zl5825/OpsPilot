@@ -3,9 +3,7 @@ from __future__ import annotations
 import os
 from typing import Literal
 
-from mcp.server.fastmcp import FastMCP
-
-from mcp_servers.common.http_server import run_streamable_http
+from mcp_servers.common.http_server import create_mcp, run_streamable_http
 from mcp_servers.common.runtime import ToolRuntime
 from mcp_servers.deployments.backends import CatalogBackend, LiveDeploymentBackend
 from mcp_servers.deployments.tools import (
@@ -18,7 +16,7 @@ from mcp_servers.deployments.tools import (
     get_recent_deployments as get_recent_deployments_impl,
 )
 
-mcp = FastMCP("opspilot-deployments")
+mcp = create_mcp("opspilot-deployments")
 
 _Service = Literal["gateway", "checkout", "payment", "inventory", "notification"]
 _ServiceOrAll = Literal["all", "gateway", "checkout", "payment", "inventory", "notification"]
