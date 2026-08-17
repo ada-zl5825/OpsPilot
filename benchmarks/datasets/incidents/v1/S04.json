@@ -1,0 +1,64 @@
+{
+  "scenario_id": "S04",
+  "version": "1.0.0",
+  "title": "edge and checkout failures for paying customers",
+  "difficulty": "L3",
+  "initial_symptoms": [
+    "The edge API and checkout both return errors for paying customers",
+    "Orders fail before a receipt is issued"
+  ],
+  "ground_truth_root_causes": ["payment_downstream_deadline_exceeded"],
+  "required_evidence": [
+    {
+      "source_system": "tempo",
+      "description": "traces show the payment span consuming most of the checkout budget",
+      "required": true
+    },
+    {
+      "source_system": "loki",
+      "description": "checkout logs show a downstream request deadline was exceeded",
+      "required": true
+    },
+    {
+      "source_system": "prometheus",
+      "description": "gateway and checkout error rates rise together",
+      "required": true
+    }
+  ],
+  "necessary_tool_categories": ["traces", "metrics", "logs"],
+  "forbidden_shortcuts": [
+    "restart the gateway without a trace comparison",
+    "scale checkout because the edge API is also failing"
+  ],
+  "allowed_remediations": [
+    {
+      "action_type": "rollback_deployment",
+      "description": "restore the previous payment release"
+    },
+    {
+      "action_type": "update_config",
+      "description": "shed checkout payment traffic after confirming the downstream deadline"
+    }
+  ],
+  "recovery_checks": [
+    {
+      "check_id": "s04_http_success",
+      "description": "storefront accepts a new order",
+      "metric_or_endpoint": "http://gateway:8080/api/orders",
+      "success_criteria": "status==200"
+    },
+    {
+      "check_id": "s04_payment_budget",
+      "description": "payment charge finishes inside the checkout budget",
+      "metric_or_endpoint": "downstream_request_duration_seconds",
+      "success_criteria": "<1.0s"
+    }
+  ],
+  "distractors": [
+    "inventory stock checks remain successful"
+  ],
+  "prompt_variants": [
+    "Paying customers are seeing failures at the edge API and during checkout."
+  ],
+  "verification_code": "OP-S04-T9VC4E"
+}

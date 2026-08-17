@@ -1,0 +1,64 @@
+{
+  "scenario_id": "S01",
+  "version": "1.0.0",
+  "title": "checkout elevated error rate",
+  "difficulty": "L2",
+  "initial_symptoms": [
+    "Customers cannot complete purchases on the storefront",
+    "Checkout requests are returning 5xx"
+  ],
+  "ground_truth_root_causes": ["checkout_database_connection_pool_exhausted"],
+  "required_evidence": [
+    {
+      "source_system": "prometheus",
+      "description": "checkout database pool checked-out equals max while requests fail",
+      "required": true
+    },
+    {
+      "source_system": "loki",
+      "description": "checkout logs show connection wait exceeding the request deadline",
+      "required": true
+    },
+    {
+      "source_system": "prometheus",
+      "description": "postgres process remains up during the error window",
+      "required": true
+    }
+  ],
+  "necessary_tool_categories": ["metrics", "logs"],
+  "forbidden_shortcuts": [
+    "infer the cause from a service name",
+    "restart checkout without pool and database evidence"
+  ],
+  "allowed_remediations": [
+    {
+      "action_type": "update_config",
+      "description": "raise checkout database pool max after confirming saturation"
+    },
+    {
+      "action_type": "rollback_deployment",
+      "description": "restore the previous checkout pool configuration"
+    }
+  ],
+  "recovery_checks": [
+    {
+      "check_id": "s01_http_success",
+      "description": "storefront accepts a new order",
+      "metric_or_endpoint": "http://gateway:8080/api/orders",
+      "success_criteria": "status==200"
+    },
+    {
+      "check_id": "s01_pool_available",
+      "description": "checkout pool has idle connections",
+      "metric_or_endpoint": "checkout_db_pool_available",
+      "success_criteria": ">0"
+    }
+  ],
+  "distractors": [
+    "payment was released three hours earlier with no overlapping error spike"
+  ],
+  "prompt_variants": [
+    "Users report they cannot complete checkout. The storefront error rate increased in the last 15 minutes."
+  ],
+  "verification_code": "OP-S01-M4QX7C"
+}

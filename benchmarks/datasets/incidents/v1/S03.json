@@ -1,0 +1,60 @@
+{
+  "scenario_id": "S03",
+  "version": "1.0.0",
+  "title": "checkout errors after a release window",
+  "difficulty": "L3",
+  "initial_symptoms": [
+    "Checkout 5xx jumped during the 10:14 release window",
+    "New orders fail immediately after the storefront update"
+  ],
+  "ground_truth_root_causes": ["checkout_regression_in_release_1_4_2"],
+  "required_evidence": [
+    {
+      "source_system": "deployments",
+      "description": "checkout version and release timestamp align with the error start",
+      "required": true
+    },
+    {
+      "source_system": "loki",
+      "description": "checkout logs show order pricing failures on the current build",
+      "required": true
+    },
+    {
+      "source_system": "prometheus",
+      "description": "5xx rate rose immediately after the version change",
+      "required": true
+    }
+  ],
+  "necessary_tool_categories": ["metrics", "logs", "deployments"],
+  "forbidden_shortcuts": [
+    "treat any recent neighbor release as the cause",
+    "roll forward without comparing the current and previous checkout release"
+  ],
+  "allowed_remediations": [
+    {
+      "action_type": "rollback_deployment",
+      "description": "roll checkout back to the previous release"
+    }
+  ],
+  "recovery_checks": [
+    {
+      "check_id": "s03_http_success",
+      "description": "storefront accepts a new order",
+      "metric_or_endpoint": "http://gateway:8080/api/orders",
+      "success_criteria": "status==200"
+    },
+    {
+      "check_id": "s03_version_restored",
+      "description": "checkout reports the previous release",
+      "metric_or_endpoint": "http://checkout:8081/version",
+      "success_criteria": "version==1.4.1"
+    }
+  ],
+  "distractors": [
+    "payment 2.1.0 shipped earlier the same morning"
+  ],
+  "prompt_variants": [
+    "Checkout errors jumped right after the 10:14 release window. New orders fail on the storefront."
+  ],
+  "verification_code": "OP-S03-K2PL9D"
+}

@@ -1,0 +1,64 @@
+{
+  "scenario_id": "S02",
+  "version": "1.0.0",
+  "title": "storefront checkout latency",
+  "difficulty": "L2",
+  "initial_symptoms": [
+    "Checkout wait times increased over the last twenty minutes",
+    "The storefront feels slow for returning customers"
+  ],
+  "ground_truth_root_causes": ["redis_cache_lookup_latency"],
+  "required_evidence": [
+    {
+      "source_system": "prometheus",
+      "description": "cache lookup duration is elevated while hit ratio drops",
+      "required": true
+    },
+    {
+      "source_system": "loki",
+      "description": "checkout logs show cache lookups exceeding the latency budget",
+      "required": true
+    },
+    {
+      "source_system": "prometheus",
+      "description": "database activity is only slightly higher than baseline",
+      "required": true
+    }
+  ],
+  "necessary_tool_categories": ["metrics", "logs"],
+  "forbidden_shortcuts": [
+    "blame the database because CPU ticked up",
+    "restart redis without latency evidence"
+  ],
+  "allowed_remediations": [
+    {
+      "action_type": "update_config",
+      "description": "restore the previous cache client timeout and isolation settings"
+    },
+    {
+      "action_type": "restart_workload",
+      "description": "recycle the cache client after isolating the slow path"
+    }
+  ],
+  "recovery_checks": [
+    {
+      "check_id": "s02_http_success",
+      "description": "storefront accepts a new order",
+      "metric_or_endpoint": "http://gateway:8080/api/orders",
+      "success_criteria": "status==200"
+    },
+    {
+      "check_id": "s02_order_latency",
+      "description": "checkout completes within the healthy budget",
+      "metric_or_endpoint": "http_request_duration_seconds",
+      "success_criteria": "<1.2s"
+    }
+  ],
+  "distractors": [
+    "postgres CPU is slightly above the quiet baseline"
+  ],
+  "prompt_variants": [
+    "The storefront feels slow. Checkout wait times increased over the last twenty minutes."
+  ],
+  "verification_code": "OP-S02-R8NW2H"
+}
