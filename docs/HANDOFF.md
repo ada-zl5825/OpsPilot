@@ -5,7 +5,7 @@
 仓库：https://github.com/ada-zl5825/OpsPilot  
 Holmes 上游 fork：https://github.com/ada-zl5825/holmesgpt
 
-**新窗口第一件事：读本文件 + `AGENTS.md` + `skills/holmes-upstream/SKILL.md`，然后做 Phase 3。不要重做 Phase 0 / Phase 1 / Phase 2。**
+**新窗口第一件事：读本文件 + `AGENTS.md` + `skills/remediation-safety/SKILL.md`，然后做 Phase 4。不要重做 Phase 0 / Phase 1 / Phase 2 / Phase 3。**
 
 ## 当前状态
 
@@ -14,6 +14,8 @@ Holmes 上游 fork：https://github.com/ada-zl5825/holmesgpt
 **Phase 1 已完成**（S01–S04 模拟栈，不接 LLM）。
 
 **Phase 2 已完成**（Observability / Deployment / Runbook MCP，只读）。
+
+**Phase 3 已完成**（Single-Agent 调查基线）。实现：`src/opspilot/investigation/`。
 
 | 门禁 | 结果 |
 |---|---|
@@ -24,20 +26,20 @@ Holmes 上游 fork：https://github.com/ada-zl5825/holmesgpt
 | Tempo `/api/search` | 有 checkout/payment span |
 | `holmes` profile | 未破坏；可与 `lab` 同时运行 |
 | Phase 2 unit + contract | `tests/unit` + `tests/contract`（含 Azure schema suite） |
+| Phase 3 unit + contract | S01–S04 prompt 无 GT；Final Diagnosis 必须引用 Evidence ID；轨迹可回放；重复 tool/失败结果不能标成功 |
 
-**下一步是 Phase 3：Single-Agent 调查基线。不要做 UI / Multi-Agent / SFT，不要给 Agent 写工具。**
+**下一步是 Phase 4：安全修复控制面。不要做 UI / Multi-Agent / SFT，不要给 Agent 写工具。**
 
 ## 新窗口开场 Prompt（可直接粘贴）
 
 ```text
-先读 docs/HANDOFF.md、AGENTS.md、skills/holmes-upstream/SKILL.md。
-Phase 0–2 已完成，不要重做 Holmes 基线、模拟器或 Phase 2 MCP。
+先读 docs/HANDOFF.md、AGENTS.md、skills/remediation-safety/SKILL.md。
+Phase 0–3 已完成，不要重做 Holmes 基线、模拟器、Phase 2 MCP 或 Single-Agent 调查。
 
-实现 Single-Agent 调查基线：用现有 Holmes client 跑 S01–S04，记录完整轨迹，
-强制 tool budget / 无进展检测，Final Diagnosis 必须引用 Evidence ID。
-Ground truth 不得进入 prompt、tool result 或 runbook。
+实现 Phase 4 安全修复控制面：Proposal → Policy → Approval → Executor。
+Agent 不得获得 execute_approved_proposal。未批准、被篡改或过期的 Proposal 不能执行。
 
-不实现写执行、UI、Multi-Agent 或 SFT。
+不实现 UI、Multi-Agent 或 SFT。
 ```
 
 ## 硬约束（违反即做错）
@@ -118,7 +120,14 @@ python -m uv run python -m simulator.harness --cycles 2
 # 或：$env:OPSPILOT_REQUIRE_LAB="1"; python -m uv run pytest tests/simulator -q
 ```
 
-Makefile 等价：`make test`、`make holmes-up`、`make holmes-smoke`、`make lab-up`、`make lab-verify`。Windows 上若没 make，直接跑上面的 python/docker 命令。
+Makefile 等价：`make test`、`make holmes-up`、`make holmes-smoke`、`make lab-up`、`make lab-verify`、`make investigate-prompt`。Windows 上若没 make，直接跑上面的 python/docker 命令。
+
+Phase 3（不接 LLM 也可验 prompt / 回放门禁）：
+
+```powershell
+python -m uv run python -m opspilot.cli investigate --all --prompt-only
+python -m uv run pytest tests/unit/test_investigation_runner.py tests/contract/test_investigation_prompt_integrity.py -q
+```
 
 集成测试（可选）：
 
@@ -148,6 +157,8 @@ python -m uv run pytest tests/integration -q
 | `benchmarks/datasets/incidents/v1/` | S01–S04 场景 JSON（scorer-only ground truth） |
 | `src/opspilot/lab/scenarios.py` | 加载 `IncidentScenario` |
 | `src/opspilot/domain/incidents.py` | `IncidentScenario` schema，含 scorer-only ground truth |
+| `src/opspilot/investigation/` | Phase 3 Single-Agent：prompt、budget、evidence、diagnosis、event store、replay、runner |
+| `src/opspilot/storage/` | IncidentRun / Evidence / Hypothesis / AgentEvent 表定义 |
 | `docker-compose.yml` | `postgres` 常开；`holmes` / `lab` 两个 profile |
 
 ## Phase 1 已验收
@@ -181,11 +192,35 @@ Controller：`http://localhost:8090/v1/scenarios/{S01}/inject|reset`。响应不
 python -m uv run pytest tests/unit tests/contract -q
 ```
 
+## Phase 3 已验收
+
+- 复用现有 Holmes client 与 Phase 2 只读 MCP；不重写 Agent loop。
+- Stream Event Store：`InMemoryInvestigationStore` / `JsonlInvestigationStore`（`artifacts/investigations/{run_id}/events.jsonl`）。
+- IncidentRun / Evidence / Hypothesis；Final Diagnosis 必须引用成功 Evidence ID。
+- 调查 Prompt 只含 `AgentVisibleIncident`（症状 + 用户报告）。ground truth / verification code / required_evidence 不进 prompt。
+- Tool budget、同一 query 重复上限、无进展检测。
+- 失败 tool result 不能当成功证据；超预算 / 无进展 / 缺引用 / 写工具尝试都不能标 `diagnosis_complete`。未做恢复验证不能标 `resolved`。
+- 轨迹可回放：`opspilot replay --run-id`。
+- CLI：`opspilot investigate --scenario S01` / `--all --prompt-only`。
+- API：`POST/GET /api/incidents`、`GET /api/incidents/{id}/events`、`POST .../cancel`。不接写执行。
+
+```powershell
+python -m uv run python -m opspilot.cli investigate --all --prompt-only
+python -m uv run pytest tests/unit tests/contract -q
+```
+
+Live Azure 调查（可选，需 lab inject + holmes）：
+
+```powershell
+python -m uv run python -m opspilot.cli investigate --scenario S01
+```
+
 ## 不要做
 
 - 不要重跑/重写 Phase 0 Holmes client，除非 compose 被你改坏了。
 - 不要重做 S01–S04 模拟器，除非 lab profile 被你改坏了。
 - 不要重做 Phase 2 只读 MCP，除非契约测试被你改坏了。
+- 不要重做 Phase 3 调查运行时，除非轨迹/诊断门禁被你改坏了。
 - 不要把写操作 MCP 和只读工具混在一次大 PR 里。
 - 不要给 Agent 容器挂可写 kube 凭证。
 - 不要把 `.env`、密钥、真实 Azure endpoint 写进文档或 commit。

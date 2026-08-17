@@ -13,4 +13,6 @@
 | `ExecutionAttempt` | 执行尝试与回滚结果 |
 | `AgentEvent` | 可回放轨迹事件 |
 
-Final Diagnosis 必须引用 Evidence ID。未完成恢复验证不得标记 `resolved`。
+Final Diagnosis 必须引用 Evidence ID。未完成恢复验证不得标记 `resolved`（`IncidentRun.recovery_verified` 必须为 true）。
+
+Phase 3 调查运行时：`src/opspilot/investigation/`。轨迹写入 Stream Event Store（内存或 `artifacts/investigations/{run_id}/events.jsonl`），可用 `opspilot replay --run-id` 回放。

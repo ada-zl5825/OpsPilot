@@ -13,3 +13,5 @@
 - 保留 Holdout
 
 实现入口：`benchmarks/`。完整性检查：`python -m benchmarks.datasets.check_integrity`。
+
+Phase 3 已能产出可回放轨迹（`artifacts/investigations/`）。完整 scorer / 对照实验仍是 Phase 5。

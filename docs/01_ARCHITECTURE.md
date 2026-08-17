@@ -40,7 +40,9 @@ LLM 文本不能直接跨越 deterministic boundary 执行写操作。
 
 `IncidentCreated → Investigating → RootCauseProposed → VerificationReview → RemediationProposed → AwaitingApproval → Executing → RecoveryVerification → Resolved | RolledBack | HumanEscalation`
 
-## OTel 布局（Phase 3）
+## OTel 布局
+
+Phase 3 已挂 `incident.run` / `holmes.investigation`（无 provider 时为 no-op）。修复路径 span 仍待 Phase 4。
 
 ```text
 incident.run
