@@ -1,0 +1,15 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: lab-services
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - gateway:8080
+          - checkout:8081
+          - payment:8082
+          - inventory:8083
+          - notification:8084
+          - controller:8090
