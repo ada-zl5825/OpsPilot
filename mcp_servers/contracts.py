@@ -150,9 +150,23 @@ TOOL_CATALOG: list[ToolContract] = [
 ]
 
 
+PHASE2_SERVERS = frozenset({"observability", "deployments", "runbooks"})
+
+
 def agent_visible_tools() -> list[ToolContract]:
     return [tool for tool in TOOL_CATALOG if tool["agent_visible"]]
 
 
 def mutate_tools() -> list[ToolContract]:
     return [tool for tool in TOOL_CATALOG if tool["permission"] == "mutate"]
+
+
+def phase2_tools() -> list[ToolContract]:
+    return [tool for tool in TOOL_CATALOG if tool["server"] in PHASE2_SERVERS]
+
+
+def tool_by_name(name: str) -> ToolContract:
+    for tool in TOOL_CATALOG:
+        if tool["name"] == name:
+            return tool
+    raise KeyError(name)
