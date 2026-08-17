@@ -6,7 +6,7 @@ OpsPilot does not reimplement the HolmesGPT agent loop. This repo owns the incid
 
 ## Current status
 
-**Phase 0 complete.** HolmesGPT is pinned to `robustadev/holmes:0.39.0`. **Phase 1 complete:** S01–S04 lab stack, hidden ground truth, and LLM-free recovery checks. Next: Phase 2 observability MCP. New window: start from [`docs/HANDOFF.md`](docs/HANDOFF.md).
+**Phase 0 complete.** HolmesGPT is pinned to `robustadev/holmes:0.39.0`. **Phase 1 complete:** S01–S04 lab stack. **Phase 2 complete:** observability / deployment / runbook MCP (read-only). Next: Phase 3 Single-Agent investigation. New window: start from [`docs/HANDOFF.md`](docs/HANDOFF.md).
 
 ```bash
 make holmes-up

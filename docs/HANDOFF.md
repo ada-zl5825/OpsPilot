@@ -5,13 +5,15 @@
 仓库：https://github.com/ada-zl5825/OpsPilot  
 Holmes 上游 fork：https://github.com/ada-zl5825/holmesgpt
 
-**新窗口第一件事：读本文件 + `AGENTS.md` + `skills/mcp-toolset/SKILL.md`，然后做 Phase 2。不要重做 Phase 0 / Phase 1。**
+**新窗口第一件事：读本文件 + `AGENTS.md` + `skills/holmes-upstream/SKILL.md`，然后做 Phase 3。不要重做 Phase 0 / Phase 1 / Phase 2。**
 
 ## 当前状态
 
 **Phase 0 已完成**（真实 Azure + Holmes 容器）。记录：`docs/UPSTREAM_BASELINE.md`。
 
 **Phase 1 已完成**（S01–S04 模拟栈，不接 LLM）。
+
+**Phase 2 已完成**（Observability / Deployment / Runbook MCP，只读）。
 
 | 门禁 | 结果 |
 |---|---|
@@ -21,24 +23,21 @@ Holmes 上游 fork：https://github.com/ada-zl5825/holmesgpt
 | Loki `{service_name="checkout"}` | 有场景日志（含 request_id token） |
 | Tempo `/api/search` | 有 checkout/payment span |
 | `holmes` profile | 未破坏；可与 `lab` 同时运行 |
+| Phase 2 unit + contract | `tests/unit` + `tests/contract`（含 Azure schema suite） |
 
-**下一步是 Phase 2：Observability / Deployment / Runbook MCP。不要做 UI / Multi-Agent / SFT，不要给 Agent 写工具。**
+**下一步是 Phase 3：Single-Agent 调查基线。不要做 UI / Multi-Agent / SFT，不要给 Agent 写工具。**
 
 ## 新窗口开场 Prompt（可直接粘贴）
 
 ```text
-先读 docs/HANDOFF.md、AGENTS.md、skills/mcp-toolset/SKILL.md。
-Phase 0 和 Phase 1 已完成，不要重做 Holmes 基线或模拟器。
+先读 docs/HANDOFF.md、AGENTS.md、skills/holmes-upstream/SKILL.md。
+Phase 0–2 已完成，不要重做 Holmes 基线、模拟器或 Phase 2 MCP。
 
-$mcp-toolset
+实现 Single-Agent 调查基线：用现有 Holmes client 跑 S01–S04，记录完整轨迹，
+强制 tool budget / 无进展检测，Final Diagnosis 必须引用 Evidence ID。
+Ground truth 不得进入 prompt、tool result 或 runbook。
 
-实现 Observability、Deployment 和 Runbook 三个 MCP Server。所有工具使用严格 typed
-input/output，强制时间范围、limit、timeout、server-side filtering、structured errors 和
-artifact spilling。默认提供 query_service_metrics、query_service_logs、get_trace_summary、
-get_recent_deployments、compare_deployments、search_runbooks。为每个 Tool 编写 unit 和
-contract tests，并增加 Azure OpenAI schema compatibility suite。
-
-不实现写操作，不实现任意 PromQL/Shell，不实现 UI。
+不实现写执行、UI、Multi-Agent 或 SFT。
 ```
 
 ## 硬约束（违反即做错）
@@ -76,6 +75,7 @@ $env:Path = "$machine;$user"
 - 文件：`config/holmesgpt.pin`
 - HTTP：`http://localhost:5050`（`/healthz`、`/api/chat`）
 - Lab MCP：`http://localhost:8000/mcp`（容器内 Holmes 走 `http://opspilot-mcp:8000/mcp`）
+- Phase 2 MCP：observability `8001`、deployments `8002`、runbooks `8003`
 
 ## Phase 0 踩坑（改 Holmes / Azure 时必看）
 
@@ -140,6 +140,10 @@ python -m uv run pytest tests/integration -q
 | `config/holmes/config.yaml` | toolsets + MCP + approval |
 | `config/holmes/model_list.yaml` | Azure 模型与 token 上限 |
 | `mcp_servers/lab/` | Phase 0 echo MCP |
+| `mcp_servers/common/` | Phase 2 共享运行时（错误、时间范围、预算、artifact） |
+| `mcp_servers/observability/` | metrics / logs / traces（禁止任意 PromQL） |
+| `mcp_servers/deployments/` | recent / compare / CI summary |
+| `mcp_servers/runbooks/` | search_runbooks（untrusted） |
 | `simulator/` | Phase 1 微服务、故障注入、观测栈、harness |
 | `benchmarks/datasets/incidents/v1/` | S01–S04 场景 JSON（scorer-only ground truth） |
 | `src/opspilot/lab/scenarios.py` | 加载 `IncidentScenario` |
@@ -164,11 +168,25 @@ Controller：`http://localhost:8090/v1/scenarios/{S01}/inject|reset`。响应不
 
 完整设计：`OpsPilot_完整开发技术文档.md` 的 Phase 1 章节。用法：`simulator/README.md`。
 
+## Phase 2 已验收
+
+- 三个只读 MCP：observability `:8001`、deployments `:8002`、runbooks `:8003`。
+- 工具：`query_service_metrics`、`query_service_logs`、`get_trace_summary`、`get_recent_deployments`、`compare_deployments`、`get_ci_failure_summary`、`search_runbooks`。
+- 每个工具有 timeout、`max_result_bytes`、结构化错误、服务器端过滤、artifact spilling。
+- Azure schema suite：单个坏工具隔离，不丢 catalog。
+- Holmes `config/holmes/config.yaml` 已注册三个 Phase 2 toolset。不要加 `health_check_tool`。
+- 无写操作、无任意 PromQL/Shell、无 UI。
+
+```powershell
+python -m uv run pytest tests/unit tests/contract -q
+```
+
 ## 不要做
 
 - 不要重跑/重写 Phase 0 Holmes client，除非 compose 被你改坏了。
 - 不要重做 S01–S04 模拟器，除非 lab profile 被你改坏了。
-- 不要把写操作 MCP 和 Phase 2 只读工具混在一次大 PR 里。
+- 不要重做 Phase 2 只读 MCP，除非契约测试被你改坏了。
+- 不要把写操作 MCP 和只读工具混在一次大 PR 里。
 - 不要给 Agent 容器挂可写 kube 凭证。
 - 不要把 `.env`、密钥、真实 Azure endpoint 写进文档或 commit。
 - 不要把 ground truth / verification code 写进 MCP 工具结果或 runbook。
