@@ -9,7 +9,7 @@ def test_health() -> None:
     assert response.status_code == 200
     body = response.json()
     assert body["status"] == "ok"
-    assert body["phase"] == "0"
+    assert body["phase"] == "1"
 
 
 def test_execute_route_exists_but_not_implemented() -> None:
