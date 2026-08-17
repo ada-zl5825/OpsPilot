@@ -19,7 +19,7 @@ HolmesGPT is the Agent runtime. This repository owns the incident lab, MCP tools
 
 ## Current phase
 
-Phase 0 is complete (`docs/UPSTREAM_BASELINE.md`, `docs/HANDOFF.md`). Next is Phase 1 simulator (S01–S04). Do not start UI, remediation execution, Multi-Agent, or SFT. Phase 1 must not call an LLM.
+Phase 0 and Phase 1 are complete (`docs/UPSTREAM_BASELINE.md`, `docs/HANDOFF.md`). Next is Phase 2 observability/deployment/runbook MCP. Do not start UI, remediation execution, Multi-Agent, or SFT.
 
 ## Skills
 

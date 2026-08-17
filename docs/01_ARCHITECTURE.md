@@ -10,7 +10,22 @@ OpsPilot API / Benchmark Runner
    ├── Deployment MCP
    ├── Runbook MCP
    ├── Remediation MCP
-   └── PostgreSQL / OTel stack
+   └── PostgreSQL / Redis / Prometheus / Loki / Tempo
+```
+
+Phase 1 lab topology:
+
+```text
+gateway → checkout → inventory
+                  → payment
+                  → PostgreSQL
+                  → Redis
+         → notification
+
+controller  inject/reset flags in Redis
+traffic     background storefront orders
+otel-collector → Loki (logs) + Tempo (traces)
+Prometheus scrapes /metrics
 ```
 
 ## 信任边界

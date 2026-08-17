@@ -5,40 +5,40 @@
 仓库：https://github.com/ada-zl5825/OpsPilot  
 Holmes 上游 fork：https://github.com/ada-zl5825/holmesgpt
 
-**新窗口第一件事：读本文件 + `AGENTS.md` + `skills/incident-scenario/SKILL.md`，然后做 Phase 1。不要重做 Phase 0。**
+**新窗口第一件事：读本文件 + `AGENTS.md` + `skills/mcp-toolset/SKILL.md`，然后做 Phase 2。不要重做 Phase 0 / Phase 1。**
 
 ## 当前状态
 
-**Phase 0 已完成，且已用真实 Azure + Holmes 容器验收。**
+**Phase 0 已完成**（真实 Azure + Holmes 容器）。记录：`docs/UPSTREAM_BASELINE.md`。
+
+**Phase 1 已完成**（S01–S04 模拟栈，不接 LLM）。
 
 | 门禁 | 结果 |
 |---|---|
-| Holmes `/healthz` | `{"status":"healthy"}` |
-| Azure `/api/chat` | 通，模型 `azure/Opspilot-gpt-4o` |
-| MCP `lab_status` | Holmes 实际调用，最终回答含 `OP-P0-LAB` |
-| `lab_mutate_probe` + `enable_tool_approval` | stream 停在 `approval_required`，`unapproved_write_attempted=false` |
-| 离线 unit + contract | 通过 |
+| `python -m benchmarks.datasets.check_integrity` | `dataset integrity ok (4 scenarios)` |
+| `python -m simulator.harness --cycles 2` | S01–S04 各两轮 inject/reset/recovery 全过 |
+| Prometheus `sum(http_requests_total)` | 有真实计数 |
+| Loki `{service_name="checkout"}` | 有场景日志（含 request_id token） |
+| Tempo `/api/search` | 有 checkout/payment span |
+| `holmes` profile | 未破坏；可与 `lab` 同时运行 |
 
-详细记录：`docs/UPSTREAM_BASELINE.md`。
-
-**下一步是 Phase 1：事故模拟环境（S01–S04）。不接 LLM，不做 UI / Multi-Agent / SFT。**
+**下一步是 Phase 2：Observability / Deployment / Runbook MCP。不要做 UI / Multi-Agent / SFT，不要给 Agent 写工具。**
 
 ## 新窗口开场 Prompt（可直接粘贴）
 
 ```text
-先读 docs/HANDOFF.md、AGENTS.md、skills/incident-scenario/SKILL.md。
-Phase 0 已完成，不要重做 Holmes 基线。
+先读 docs/HANDOFF.md、AGENTS.md、skills/mcp-toolset/SKILL.md。
+Phase 0 和 Phase 1 已完成，不要重做 Holmes 基线或模拟器。
 
-$incident-scenario
+$mcp-toolset
 
-实现 OpsPilot 微服务事故模拟 MVP。使用 Docker Compose，包含 gateway、checkout、
-payment、inventory、PostgreSQL、Redis、Prometheus、Loki、Tempo 和 OTel Collector。
-实现 S01 数据库连接池耗尽、S02 Redis 延迟、S03 错误部署、S04 下游支付超时。
-每个场景必须提供 inject、reset、ground truth、required evidence、allowed remediation、
-recovery checks 和 anti-cheat verification code。故障和恢复必须可重复、幂等；
-不得在资源名、日志或 prompt 中暴露根因。
+实现 Observability、Deployment 和 Runbook 三个 MCP Server。所有工具使用严格 typed
+input/output，强制时间范围、limit、timeout、server-side filtering、structured errors 和
+artifact spilling。默认提供 query_service_metrics、query_service_logs、get_trace_summary、
+get_recent_deployments、compare_deployments、search_runbooks。为每个 Tool 编写 unit 和
+contract tests，并增加 Azure OpenAI schema compatibility suite。
 
-不接 LLM。完成后运行场景完整性测试、两次连续 inject/reset 和真实恢复验证。
+不实现写操作，不实现任意 PromQL/Shell，不实现 UI。
 ```
 
 ## 硬约束（违反即做错）
@@ -109,7 +109,16 @@ python -m uv run python scripts/dump_live_approval.py
 # 期望：paused=true，pending=["lab_mutate_probe"]，unapproved_write_attempted=false
 ```
 
-Makefile 等价：`make test`、`make holmes-up`、`make holmes-smoke`。Windows 上若没 make，直接跑上面的 python/docker 命令。
+Phase 1 lab：
+
+```powershell
+docker compose --profile lab up -d --build
+python -m uv run python -m benchmarks.datasets.check_integrity
+python -m uv run python -m simulator.harness --cycles 2
+# 或：$env:OPSPILOT_REQUIRE_LAB="1"; python -m uv run pytest tests/simulator -q
+```
+
+Makefile 等价：`make test`、`make holmes-up`、`make holmes-smoke`、`make lab-up`、`make lab-verify`。Windows 上若没 make，直接跑上面的 python/docker 命令。
 
 集成测试（可选）：
 
@@ -131,37 +140,38 @@ python -m uv run pytest tests/integration -q
 | `config/holmes/config.yaml` | toolsets + MCP + approval |
 | `config/holmes/model_list.yaml` | Azure 模型与 token 上限 |
 | `mcp_servers/lab/` | Phase 0 echo MCP |
-| `simulator/` | **Phase 1 主战场（现在几乎是空 README）** |
+| `simulator/` | Phase 1 微服务、故障注入、观测栈、harness |
+| `benchmarks/datasets/incidents/v1/` | S01–S04 场景 JSON（scorer-only ground truth） |
+| `src/opspilot/lab/scenarios.py` | 加载 `IncidentScenario` |
 | `src/opspilot/domain/incidents.py` | `IncidentScenario` schema，含 scorer-only ground truth |
-| `docker-compose.yml` | 现在只有 postgres + holmes + lab MCP |
+| `docker-compose.yml` | `postgres` 常开；`holmes` / `lab` 两个 profile |
 
-## Phase 1 验收（做完必须满足）
+## Phase 1 已验收
 
-- 一条命令拉起模拟栈（可在现有 compose 上加 profile，不要破坏 holmes profile）。
-- S01–S04 各自：inject、reset、ground truth、required evidence、allowed remediation、recovery checks、anti-cheat verification code。
-- 故障与恢复可重复、幂等；连续两次 inject/reset 都过。
-- 指标、日志、Trace 有真实数据（Prometheus / Loki / Tempo）。
-- **不调用 LLM** 也能确定性验证故障与恢复。
-- 服务名、日志、prompt **不得泄露根因**（不要写 `simulated error`、不要用 `broken-payment` 这种名字）。
-- verification code 只能通过工具/观测数据被 Agent 日后发现，不能写进 prompt 或 runbook。
+- `docker compose --profile lab up -d --build` 一条命令拉起商店 + 观测栈；`holmes` profile 仍可用。
+- S01–S04：inject / reset / ground truth / required evidence / allowed remediation / recovery checks / verification code。
+- 连续两轮 inject/reset 幂等；恢复检查打真实 HTTP 与 `/metrics`。
+- 指标、日志、Trace 有真实数据。verification code 只出现在观测数据（如 `request_id`），不进 prompt / controller 响应。
 
-场景表：
+| ID | 故障 | 本机复验 |
+|---|---|---|
+| S01 | 数据库连接池耗尽 | 503 ~1.0s，token 可见，reset 后 200 |
+| S02 | Redis 延迟 / 缓存塌陷 | 200 ~2.0s，token 可见，reset 后 <1.2s |
+| S03 | 错误部署 | 500，`/version` 回 1.4.1 |
+| S04 | 下游支付超时 | 504 ~2.0s，token 可见 |
 
-| ID | 故障 |
-|---|---|
-| S01 | 数据库连接池耗尽 |
-| S02 | Redis 延迟 / 缓存塌陷 |
-| S03 | 错误部署 |
-| S04 | 下游支付超时 |
+Controller：`http://localhost:8090/v1/scenarios/{S01}/inject|reset`。响应不含 ground truth。
 
-完整设计：`OpsPilot_完整开发技术文档.md` 的 Phase 1 章节。
+完整设计：`OpsPilot_完整开发技术文档.md` 的 Phase 1 章节。用法：`simulator/README.md`。
 
 ## 不要做
 
 - 不要重跑/重写 Phase 0 Holmes client，除非 compose 被你改坏了。
-- 不要把 observability MCP（Phase 2）和模拟器混在一次大 PR 里；Phase 1 只建环境和场景。
+- 不要重做 S01–S04 模拟器，除非 lab profile 被你改坏了。
+- 不要把写操作 MCP 和 Phase 2 只读工具混在一次大 PR 里。
 - 不要给 Agent 容器挂可写 kube 凭证。
 - 不要把 `.env`、密钥、真实 Azure endpoint 写进文档或 commit。
+- 不要把 ground truth / verification code 写进 MCP 工具结果或 runbook。
 - 不要 `git push --force`，也不要改 git config。
 
 ## 复验记录（2026-08-17，本机）
@@ -181,3 +191,16 @@ dump_live_approval.py
 ```
 
 Holmes 日志关键行：`✅ Toolset opspilot_lab`，随后 `Running tool #1 lab_status`。
+
+## Phase 1 复验记录（2026-08-17，本机）
+
+```text
+dataset integrity ok (4 scenarios)
+
+S01 cycle 1/2: ok  fault=503 token=True recover=True
+S02 cycle 1/2: ok  fault=200 ~2.0s token=True recover=True
+S03 cycle 1/2: ok  fault=500 token=True recover=True
+S04 cycle 1/2: ok  fault=504 token=True recover=True
+observability prometheus/loki/tempo: ok
+pytest tests/simulator: 1 passed
+```

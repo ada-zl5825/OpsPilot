@@ -12,6 +12,6 @@ alwaysApply: true
 - No arbitrary shell, no `shell=True`, no kube write credentials on the Agent container.
 - Ground truth, verification codes, and scenario answers stay out of prompts, tools, and runbooks.
 - Do not log API keys, tokens, kubeconfig, or unredacted logs.
-- Phase 0 is complete. Current work is Phase 1 (simulator S01–S04). Do not start UI, Multi-Agent, or SFT. Phase 1 must not call an LLM. New chats: read `docs/HANDOFF.md` first.
+- Phase 0 and Phase 1 are complete. Current work is Phase 2 (observability / deployment / runbook MCP). Do not start UI, Multi-Agent, or SFT. New chats: read `docs/HANDOFF.md` first.
 - Before coding in a domain, read the matching skill under `skills/`.
 - Spec: `OpsPilot_完整开发技术文档.md`.

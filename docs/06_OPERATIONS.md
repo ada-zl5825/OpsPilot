@@ -9,6 +9,24 @@ make test
 docker compose up -d postgres
 ```
 
+## Phase 1 lab
+
+```bash
+docker compose --profile lab up -d --build
+python -m uv run python -m benchmarks.datasets.check_integrity
+python -m uv run python -m simulator.harness --cycles 2
+```
+
+Storefront: `http://localhost:8080/api/orders`  
+Controller: `http://localhost:8090/v1/scenarios`  
+Prometheus / Loki / Tempo: `9090` / `3100` / `3200`
+
+The harness does not call an LLM. It checks dataset integrity, two inject/reset cycles, and live recovery.
+
+```bash
+docker compose --profile lab down
+```
+
 ## Phase 0 Holmes
 
 ```bash
@@ -31,7 +49,7 @@ make holmes-down
 |---|---|---|
 | Init | 仓库、模型、文档、Skills | 已完成 |
 | 0 | Holmes 基线、stream、approval、Azure schema | 已完成（含 live Azure / MCP / approval） |
-| 1 | 事故模拟 S01–S04 | 下一步 |
+| 1 | 事故模拟 S01–S04 | 已完成（不接 LLM） |
 | 2 | MCP 工具 | 契约已冻结 |
 | 3 | Single-Agent 调查 | 未开始 |
 | 4 | 安全修复控制面 | 策略骨架已有 |

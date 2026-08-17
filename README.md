@@ -6,7 +6,7 @@ OpsPilot does not reimplement the HolmesGPT agent loop. This repo owns the incid
 
 ## Current status
 
-**Phase 0 complete.** HolmesGPT is pinned to `robustadev/holmes:0.39.0` (`config/holmesgpt.pin`). Live Azure `/api/chat`, MCP `lab_status`, and `approval_required_tools` are verified. Next: Phase 1 simulator. New window: start from [`docs/HANDOFF.md`](docs/HANDOFF.md).
+**Phase 0 complete.** HolmesGPT is pinned to `robustadev/holmes:0.39.0`. **Phase 1 complete:** S01–S04 lab stack, hidden ground truth, and LLM-free recovery checks. Next: Phase 2 observability MCP. New window: start from [`docs/HANDOFF.md`](docs/HANDOFF.md).
 
 ```bash
 make holmes-up
@@ -19,7 +19,8 @@ make holmes-smoke
 cp .env.example .env
 uv sync --extra dev
 make test
-docker compose up -d postgres
+docker compose --profile lab up -d --build
+python -m uv run python -m simulator.harness --cycles 2
 ```
 
 ```bash

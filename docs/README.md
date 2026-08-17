@@ -12,5 +12,5 @@
 | [06_OPERATIONS.md](06_OPERATIONS.md) | 本地启动与阶段命令 |
 | [07_UPSTREAM_CONTRIBUTION.md](07_UPSTREAM_CONTRIBUTION.md) | HolmesGPT 上游 PR 路线 |
 | [08_EXPERIMENT_REPORT.md](08_EXPERIMENT_REPORT.md) | 实验报告占位 |
-| [HANDOFF.md](HANDOFF.md) | 新窗口交接：Phase 0 已完成，从 Phase 1 接着做 |
+| [HANDOFF.md](HANDOFF.md) | 新窗口交接：Phase 0–1 已完成，从 Phase 2 接着做 |
 | [UPSTREAM_BASELINE.md](UPSTREAM_BASELINE.md) | Phase 0 验收记录（已完成） |

@@ -11,9 +11,7 @@ async def main() -> None:
     settings = get_settings()
     async with httpx.AsyncClient(base_url=settings.holmes_base_url, timeout=180.0) as http:
         client = HolmesClient(settings, client=http)
-        result = await client.ask(
-            "Call lab_mutate_probe with target=lab. Do not skip the tool."
-        )
+        result = await client.ask("Call lab_mutate_probe with target=lab. Do not skip the tool.")
     print(
         json.dumps(
             {
