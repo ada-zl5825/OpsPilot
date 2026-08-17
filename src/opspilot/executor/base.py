@@ -7,5 +7,5 @@ from opspilot.domain.remediation import ExecutionAttempt, RemediationProposal
 
 class Executor(ABC):
     @abstractmethod
-    async def execute(self, proposal: RemediationProposal) -> ExecutionAttempt:
+    def execute(self, proposal: RemediationProposal) -> ExecutionAttempt:
         raise NotImplementedError

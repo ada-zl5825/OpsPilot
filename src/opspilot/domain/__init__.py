@@ -8,7 +8,7 @@ from opspilot.domain.incidents import (
     IncidentStatus,
     TokenUsage,
 )
-from opspilot.domain.remediation import ExecutionAttempt, RemediationProposal
+from opspilot.domain.remediation import ExecutionAttempt, ProposalStatus, RemediationProposal
 
 __all__ = [
     "ApprovalDecision",
@@ -20,6 +20,7 @@ __all__ = [
     "IncidentRun",
     "IncidentScenario",
     "IncidentStatus",
+    "ProposalStatus",
     "RemediationProposal",
     "TokenUsage",
 ]

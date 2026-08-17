@@ -13,6 +13,27 @@ class RemediationActionType(StrEnum):
     UPDATE_CONFIG = "update_config"
 
 
+class ProposalStatus(StrEnum):
+    PROPOSED = "proposed"
+    POLICY_REJECTED = "policy_rejected"
+    AWAITING_APPROVAL = "awaiting_approval"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    EXECUTED = "executed"
+    FAILED = "failed"
+    ROLLED_BACK = "rolled_back"
+    EXPIRED = "expired"
+
+
+EXECUTABLE_ACTION_TYPES = frozenset(
+    {
+        RemediationActionType.ROLLBACK_DEPLOYMENT,
+        RemediationActionType.RESTART_WORKLOAD,
+        RemediationActionType.SCALE_WORKLOAD,
+    }
+)
+
+
 class ResourceRef(BaseModel):
     kind: str
     name: str
