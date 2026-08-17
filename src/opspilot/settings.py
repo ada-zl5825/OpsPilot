@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     holmes_base_url: str = "http://localhost:5050"
     holmes_model: str = "azure/gpt-4o"
     holmes_model_name: str = "azure-default"
+    holmes_timeout_seconds: float = 180.0
+    investigation_artifact_dir: str = "artifacts/investigations"
 
     azure_openai_endpoint: str | None = None
     azure_openai_api_key: str | None = None

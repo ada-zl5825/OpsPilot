@@ -53,6 +53,7 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101"]
+"src/opspilot/investigation/prompt.py" = ["E501"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
