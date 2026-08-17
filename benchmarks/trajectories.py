@@ -7,7 +7,11 @@ from uuid import UUID, uuid4, uuid5
 from benchmarks.datasets.variants import ScenarioVariant, parent_scenario
 from benchmarks.runbooks import RESULT_SUMMARIES, executable_action, runbook_steps
 from opspilot.domain.incidents import IncidentRun, IncidentStatus, TokenUsage
-from opspilot.eval.constants import DETERMINISTIC_MODEL, SINGLE_AGENT_OFFLINE_MODEL
+from opspilot.eval.constants import (
+    DETERMINISTIC_MODEL,
+    SINGLE_AGENT_OFFLINE_MODEL,
+    VERIFIER_OFFLINE_MODEL,
+)
 from opspilot.investigation.budget import ToolBudget
 from opspilot.investigation.constants import PROMPT_VERSION, TOOL_CATALOG_VERSION
 from opspilot.investigation.diagnosis import parse_and_bind_diagnosis
@@ -273,6 +277,131 @@ def build_single_agent(variant: ScenarioVariant) -> BuiltTrajectory:
     return BuiltTrajectory(
         variant=variant,
         condition="single_agent",
+        run=run,
+        events=events,
+        prompt=prompt,
+        replayed=replayed,
+    )
+
+
+def _accept_verdict() -> str:
+    import json
+
+    return json.dumps(
+        {
+            "schema_version": "phase6-verifier-v1",
+            "decision": "accept",
+            "evidence_supports_conclusion": True,
+            "unsupported_claims": [],
+            "counterexamples": [],
+            "remediation_consistent": True,
+            "safety_ok": True,
+            "confidence": 0.8,
+            "notes": ["cited evidence covers the stated conclusion"],
+        }
+    )
+
+
+def _retarget_event(event: AgentEvent, run_id: UUID, sequence: int) -> AgentEvent:
+    payload = {**event.payload, "role": event.payload.get("role") or "investigator"}
+    return event.model_copy(
+        update={
+            "event_id": uuid5(
+                TRAJECTORY_NAMESPACE, f"{run_id}:{sequence}:{event.event_type.value}"
+            ),
+            "run_id": run_id,
+            "sequence": sequence,
+            "timestamp": _EPOCH + timedelta(seconds=sequence),
+            "payload": payload,
+        }
+    )
+
+
+def build_verifier(variant: ScenarioVariant) -> BuiltTrajectory:
+    """Same investigator tools as Single-Agent, plus a schema-only Verifier accept."""
+    from opspilot.investigation.prompt import to_agent_visible
+    from opspilot.verifier.bundle import evidence_items
+    from opspilot.verifier.prompt import assert_verifier_template_safe, build_verifier_prompt
+    from opspilot.verifier.schema import InvestigatorBundle, SharedBudgetSnapshot
+
+    base = build_single_agent(variant)
+    scenario = parent_scenario(variant)
+    run_id = _run_id("verifier", variant.variant_id)
+    events = [
+        _retarget_event(event, run_id, index)
+        for index, event in enumerate(base.events, start=1)
+    ]
+    sequence = len(events) + 1
+    events.append(
+        _event(
+            run_id,
+            sequence,
+            AgentEventType.LLM_START,
+            {"model": VERIFIER_OFFLINE_MODEL, "role": "verifier"},
+        )
+    )
+    sequence += 1
+    analysis = _accept_verdict()
+    events.append(
+        _event(
+            run_id,
+            sequence,
+            AgentEventType.LLM_END,
+            {"analysis": analysis, "role": "verifier"},
+        )
+    )
+    evidence = collect_evidence(run_id, events)
+    investigator_analysis = next(
+        event.payload.get("analysis")
+        for event in reversed(events)
+        if event.event_type is AgentEventType.LLM_END
+        and event.payload.get("role") != "verifier"
+        and isinstance(event.payload.get("analysis"), str)
+    )
+    parsed = parse_and_bind_diagnosis(str(investigator_analysis), evidence)
+    if parsed.diagnosis is None:
+        raise RuntimeError(f"verifier diagnosis failed for {variant.variant_id}")
+    prompt = base.prompt
+    visible = to_agent_visible(scenario, user_report=variant.user_report)
+    bundle = InvestigatorBundle(
+        scenario_id=scenario.scenario_id,
+        incident=visible,
+        diagnosis=parsed.draft,
+        evidence=evidence_items(evidence),
+        recommended_actions=list(parsed.draft.recommended_actions) if parsed.draft else [],
+        budget=SharedBudgetSnapshot(
+            max_tool_calls=16,
+            tool_calls_used=sum(
+                1 for event in events if event.event_type is AgentEventType.TOOL_CALL
+            ),
+            remaining_tool_calls=8,
+            max_steps=3,
+            steps_used=1,
+            remaining_steps=2,
+            followups_used=0,
+            remaining_followups=1,
+        ),
+    )
+    build_verifier_prompt(bundle)
+    assert_verifier_template_safe(bundle, scenario)
+    run = IncidentRun(
+        run_id=run_id,
+        scenario_id=scenario.scenario_id,
+        source="benchmark",
+        status=IncidentStatus.DIAGNOSIS_COMPLETE,
+        model=VERIFIER_OFFLINE_MODEL,
+        prompt_version=base.run.prompt_version,
+        tool_catalog_version=TOOL_CATALOG_VERSION,
+        started_at=_EPOCH,
+        ended_at=_EPOCH + timedelta(seconds=sequence),
+        token_usage=TokenUsage(input_tokens=1200, output_tokens=350, total_tokens=1550),
+        final_diagnosis=parsed.diagnosis,
+        recovery_verified=False,
+    )
+    replayed = replay_events(run, events, ToolBudget())
+    return BuiltTrajectory(
+        variant=variant,
+        condition="verifier",
         run=run,
         events=events,
         prompt=prompt,

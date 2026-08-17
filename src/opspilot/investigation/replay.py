@@ -12,8 +12,10 @@ from opspilot.investigation.diagnosis import DiagnosisParseResult, parse_and_bin
 from opspilot.investigation.evidence import collect_evidence
 from opspilot.investigation.outcome import StopReason, decide_outcome, is_successful_status
 from opspilot.investigation.progress import ProgressState, evaluate_progress
+from opspilot.investigation.roles import is_investigator_event, is_verifier_event
 from opspilot.investigation.store import InvestigationStore
 from opspilot.telemetry.events import AgentEvent, AgentEventType
+from opspilot.verifier.schema import parse_verdict
 
 
 class ReplayResult(BaseModel):
@@ -36,11 +38,28 @@ class ReplayResult(BaseModel):
 def last_analysis(events: Sequence[AgentEvent]) -> str | None:
     analysis: str | None = None
     for event in events:
-        if event.event_type is AgentEventType.LLM_END:
-            value = event.payload.get("analysis")
-            if isinstance(value, str):
-                analysis = value
+        if event.event_type is not AgentEventType.LLM_END:
+            continue
+        if not is_investigator_event(event):
+            continue
+        value = event.payload.get("analysis")
+        if isinstance(value, str):
+            analysis = value
     return analysis
+
+
+def last_verifier_decision(events: Sequence[AgentEvent]) -> str | None:
+    decision: str | None = None
+    for event in events:
+        if event.event_type is not AgentEventType.LLM_END or not is_verifier_event(event):
+            continue
+        value = event.payload.get("analysis")
+        if not isinstance(value, str):
+            continue
+        verdict = parse_verdict(value)
+        if verdict is not None:
+            decision = verdict.decision
+    return decision
 
 
 def replay_events(
@@ -68,6 +87,7 @@ def replay_events(
         write_blocked=write_blocked,
         holmes_error=holmes_error,
         cancelled=cancelled,
+        verifier_decision=last_verifier_decision(ordered),
     )
     diagnosis = parsed.diagnosis if status is IncidentStatus.DIAGNOSIS_COMPLETE else None
     return ReplayResult(
@@ -85,7 +105,11 @@ def replay_events(
 
 
 def run_steps_from_events(events: Sequence[AgentEvent]) -> int:
-    return sum(1 for event in events if event.event_type is AgentEventType.LLM_END)
+    return sum(
+        1
+        for event in events
+        if event.event_type is AgentEventType.LLM_END and is_investigator_event(event)
+    )
 
 
 def replay_store(

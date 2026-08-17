@@ -6,7 +6,7 @@ OpsPilot does not reimplement the HolmesGPT agent loop. This repo owns the incid
 
 ## Current status
 
-**Phase 0–5 complete.** HolmesGPT is pinned to `robustadev/holmes:0.39.0`. S01–S04 lab, Phase 2 read-only MCP, Single-Agent investigation, the safe remediation control plane, and Benchmark v1 (offline Deterministic / Single-Agent, scorer, regression gate) are in place. Next: Phase 6 Verifier experiment. New window: start from [`docs/HANDOFF.md`](docs/HANDOFF.md).
+**Phase 0–6 complete.** HolmesGPT is pinned to `robustadev/holmes:0.39.0`. S01–S04 lab, Phase 2 read-only MCP, Single-Agent investigation, the safe remediation control plane, Benchmark v1, and the Verifier A/B are in place. Verifier is **not promoted**; Simple Agent stays the default. Do not start UI, Multi-Agent orchestration, or SFT. New window: start from [`docs/HANDOFF.md`](docs/HANDOFF.md).
 
 ```bash
 make holmes-up
@@ -35,6 +35,7 @@ src/opspilot/     Control plane (FastAPI, domain, policy, holmes client)
 mcp_servers/      Observability / Deployment / Runbook / Remediation MCP
 simulator/        Fault-injection microservices (Phase 1)
 benchmarks/       Trajectory eval harness (Phase 5 Benchmark v1)
+experiments/      Single vs Verifier A/B (Phase 6)
 skills/           Project agent skills
 docs/             Architecture and operations
 ```

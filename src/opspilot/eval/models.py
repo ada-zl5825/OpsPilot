@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 class Condition(StrEnum):
     DETERMINISTIC = "deterministic"
     SINGLE_AGENT = "single_agent"
+    VERIFIER = "verifier"
 
 
 class Split(StrEnum):

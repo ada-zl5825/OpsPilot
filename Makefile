@@ -1,4 +1,4 @@
-.PHONY: install lint format typecheck test test-unit test-contract test-security test-benchmark up down smoke holmes-up holmes-down holmes-smoke lab-up lab-down lab-verify investigate-prompt benchmark-offline
+.PHONY: install lint format typecheck test test-unit test-contract test-security test-benchmark up down smoke holmes-up holmes-down holmes-smoke lab-up lab-down lab-verify investigate-prompt benchmark-offline verifier-prompt verifier-ab
 
 UV ?= python -m uv
 
@@ -60,6 +60,12 @@ lab-verify:
 
 investigate-prompt:
 	$(UV) run python -m opspilot.cli investigate --all --prompt-only
+
+verifier-prompt:
+	$(UV) run python -m opspilot.cli verify --all --prompt-only
+
+verifier-ab:
+	$(UV) run python -m experiments.single_vs_verifier --offline
 
 smoke:
 	$(UV) run ruff check .

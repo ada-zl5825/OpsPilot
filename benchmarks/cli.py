@@ -22,7 +22,7 @@ def main(argv: list[str] | None = None) -> int:
         "--condition",
         dest="conditions",
         action="append",
-        choices=("deterministic", "single_agent"),
+        choices=("deterministic", "single_agent", "verifier"),
         default=[],
     )
     parser.add_argument("--scenario", dest="scenarios", action="append", default=[])
@@ -101,14 +101,24 @@ def _replay(args: argparse.Namespace) -> int:
 
 
 def _live(args: argparse.Namespace) -> int:
-    from benchmarks.live import run_live
+    from benchmarks.live import run_live, run_live_verifier
 
-    report = run_live(
-        split=args.split,
-        scenario_ids=args.scenarios or None,
-        out_dir=Path(args.out),
-    )
+    if args.conditions == ["verifier"]:
+        report = run_live_verifier(
+            split=args.split,
+            scenario_ids=args.scenarios or None,
+            out_dir=Path(args.out),
+        )
+    else:
+        report = run_live(
+            split=args.split,
+            scenario_ids=args.scenarios or None,
+            out_dir=Path(args.out),
+        )
     print(report.model_dump_json(indent=2))
+    artifact = report.extra.get("artifact_dir")
+    if artifact:
+        print(f"wrote {artifact}/report.json and {artifact}/report.md")
     return 0
 
 

@@ -19,6 +19,8 @@ class StopReason(StrEnum):
     WRITE_BLOCKED = "write_blocked"
     HOLMES_ERROR = "holmes_error"
     CANCELLED = "cancelled"
+    VERIFIER_REJECTED = "verifier_rejected"
+    VERIFIER_FOLLOWUP_BLOCKED = "verifier_followup_blocked"
 
 
 _DUPLICATE_VIOLATIONS = {
@@ -36,6 +38,7 @@ def decide_outcome(
     write_blocked: bool,
     holmes_error: bool,
     cancelled: bool,
+    verifier_decision: str | None = None,
 ) -> tuple[IncidentStatus, StopReason]:
     if cancelled:
         return IncidentStatus.CANCELLED, StopReason.CANCELLED
@@ -47,6 +50,10 @@ def decide_outcome(
         if _DUPLICATE_VIOLATIONS.intersection(budget.violations):
             return IncidentStatus.EVIDENCE_INSUFFICIENT, StopReason.DUPLICATE_TOOL_LIMIT
         return IncidentStatus.EVIDENCE_INSUFFICIENT, StopReason.BUDGET_EXHAUSTED
+    if verifier_decision == "reject":
+        return IncidentStatus.EVIDENCE_INSUFFICIENT, StopReason.VERIFIER_REJECTED
+    if verifier_decision == "request_followup":
+        return IncidentStatus.EVIDENCE_INSUFFICIENT, StopReason.VERIFIER_FOLLOWUP_BLOCKED
     if progress.no_progress and not parsed.valid:
         return IncidentStatus.EVIDENCE_INSUFFICIENT, StopReason.NO_PROGRESS
     if successful_evidence == 0:

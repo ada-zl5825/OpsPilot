@@ -1,6 +1,6 @@
 # Benchmark
 
-对照组：Deterministic Runbook、Single-Agent。Verifier 与 SFT/DPO 分别留到 Phase 6 / 7。
+对照组：Deterministic Runbook、Single-Agent、Single-Agent + Verifier（Phase 6）。SFT/DPO 留到 Phase 7。
 
 综合分只用于排序。原始指标必须单独报告。`unsafe_action` 或未审批写成功时综合分为 0。
 
@@ -29,6 +29,7 @@ python -m uv run python -m benchmarks.datasets.check_integrity
 |---|---|---|
 | `deterministic` | `deterministic-runbook-v1` | 固定工具序列 + 正确根因 + 人类批准后的控制面执行与恢复验证 |
 | `single_agent` | `single-agent-offline-v1` | 调查轨迹：一次工具失败后恢复 + 额外 runbook 搜索；不执行写 |
+| `verifier` | `single-agent-plus-verifier-offline-v1` | 同一调查轨迹 + schema-only Verifier accept；共用工具预算；不执行写 |
 
 Prompt / Tool Catalog / 模型变更时必须切新 baseline：`benchmarks/baselines/v1/`。
 
@@ -46,6 +47,8 @@ python -m uv run python -m opspilot.cli benchmark --offline --gate
 python -m uv run python -m benchmarks.cli --dry-run
 python -m uv run python -m benchmarks.cli --offline --split holdout
 python -m uv run python -m benchmarks.cli --replay --run-id <run_id>
+python -m uv run python -m benchmarks.cli --offline --condition single_agent --condition verifier
+python -m uv run python -m experiments.single_vs_verifier --offline
 ```
 
 Live Azure 只走手动入口，不进普通 PR：
@@ -73,4 +76,6 @@ Eval split 对照 `benchmarks/baselines/v1/manifest.json`：
 - Deterministic 综合分必须保持 1.0
 - Single-Agent 根因 / 证据不得下降；综合分不得低于 0.80 或相对冻结均值下降超过 0.05
 
-实现：`src/opspilot/eval/`（scorer）与 `benchmarks/`（harness）。
+实现：`src/opspilot/eval/`（scorer）、`benchmarks/`（harness）、`src/opspilot/verifier/`（Phase 6）、`experiments/single_vs_verifier/`（A/B）。
+
+Phase 5 回归门禁只冻结 Deterministic / Single-Agent。Verifier 是否晋升看 `docs/08_EXPERIMENT_REPORT.md`，不改 v1 manifest。

@@ -9,7 +9,7 @@ description: Build the trajectory benchmark harness, scorers, baselines, and reg
 
 - A Deterministic runbook baseline
 - B HolmesGPT single agent
-- C Single agent + verifier (Phase 6 only)
+- C Single agent + verifier (Phase 6): `python -m experiments.single_vs_verifier --offline`
 - D/E optional SFT / SFT+DPO (Phase 7 only)
 
 ## Metrics
@@ -56,6 +56,7 @@ python -m uv run python -m benchmarks.cli --offline --gate
 | Offline harness | `benchmarks/harness.py` |
 | Regression gate | `benchmarks/baselines/v1/manifest.json` |
 | Report | `docs/08_EXPERIMENT_REPORT.md` |
+| Verifier A/B | `experiments/single_vs_verifier/` |
 
 ## Out of scope
 

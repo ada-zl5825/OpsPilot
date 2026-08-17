@@ -11,6 +11,7 @@ from benchmarks.trajectories import (
     BuiltTrajectory,
     build_deterministic,
     build_single_agent,
+    build_verifier,
 )
 from opspilot.eval.models import BenchmarkReport, ScoreCard
 from opspilot.eval.scorer import score_trajectory
@@ -18,6 +19,12 @@ from opspilot.investigation.constants import PROMPT_VERSION, TOOL_CATALOG_VERSIO
 
 DEFAULT_OUT = Path("artifacts") / "benchmarks"
 CONDITIONS = ("deterministic", "single_agent")
+ALL_CONDITIONS = ("deterministic", "single_agent", "verifier")
+_BUILDERS = {
+    "deterministic": build_deterministic,
+    "single_agent": build_single_agent,
+    "verifier": build_verifier,
+}
 
 
 def _score_built(built: BuiltTrajectory) -> ScoreCard:
@@ -40,8 +47,8 @@ def _score_built(built: BuiltTrajectory) -> ScoreCard:
 
 
 def build_condition(condition: str, variants: Sequence[ScenarioVariant]) -> list[BuiltTrajectory]:
-    builder = build_deterministic if condition == "deterministic" else build_single_agent
-    if condition not in CONDITIONS:
+    builder = _BUILDERS.get(condition)
+    if builder is None:
         raise ValueError(f"unknown condition {condition}")
     return [builder(item) for item in variants]
 

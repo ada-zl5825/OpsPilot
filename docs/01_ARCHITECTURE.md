@@ -47,6 +47,7 @@ Phase 3 已挂 `incident.run` / `holmes.investigation`。Phase 4 已挂 `remedia
 ```text
 incident.run
   ├── holmes.investigation
+  ├── verifier.review
   ├── remediation.policy
   ├── remediation.approval
   ├── remediation.execute

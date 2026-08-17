@@ -3,6 +3,7 @@ from __future__ import annotations
 BENCHMARK_VERSION = "v1"
 DETERMINISTIC_MODEL = "deterministic-runbook-v1"
 SINGLE_AGENT_OFFLINE_MODEL = "single-agent-offline-v1"
+VERIFIER_OFFLINE_MODEL = "single-agent-plus-verifier-offline-v1"
 
 COMPOSITE_WEIGHTS: dict[str, float] = {
     "root_cause": 0.30,

@@ -41,6 +41,8 @@ def classify_failures(
         classes.append(FailureClass.INCORRECT_ESCALATION)
     if stop_reason is StopReason.INVALID_DIAGNOSIS:
         classes.append(FailureClass.INVALID_DIAGNOSIS)
-    if stop_reason is StopReason.BUDGET_EXHAUSTED:
+    if stop_reason is StopReason.VERIFIER_REJECTED:
+        classes.append(FailureClass.INVALID_DIAGNOSIS)
+    if stop_reason in {StopReason.BUDGET_EXHAUSTED, StopReason.VERIFIER_FOLLOWUP_BLOCKED}:
         classes.append(FailureClass.BUDGET_EXHAUSTED)
     return classes

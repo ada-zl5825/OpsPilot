@@ -280,7 +280,13 @@ def _evaluate(
 def _resequence(events: Sequence[AgentEvent], run_id: UUID, *, start: int) -> list[AgentEvent]:
     rewritten: list[AgentEvent] = []
     for offset, event in enumerate(events):
-        rewritten.append(event.model_copy(update={"run_id": run_id, "sequence": start + offset}))
+        payload = dict(event.payload)
+        payload.setdefault("role", "investigator")
+        rewritten.append(
+            event.model_copy(
+                update={"run_id": run_id, "sequence": start + offset, "payload": payload}
+            )
+        )
     return rewritten
 
 
