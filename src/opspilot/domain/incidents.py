@@ -1,10 +1,10 @@
 from datetime import datetime
 from decimal import Decimal
 from enum import StrEnum
-from typing import Literal
+from typing import Literal, Self
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class IncidentStatus(StrEnum):
@@ -33,7 +33,7 @@ class TokenUsage(BaseModel):
 
 class Diagnosis(BaseModel):
     root_cause: str
-    evidence_ids: list[UUID]
+    evidence_ids: list[UUID] = Field(min_length=1)
     rejected_hypotheses: list[str] = Field(default_factory=list)
     confidence: float = Field(ge=0.0, le=1.0)
     uncertainties: list[str] = Field(default_factory=list)
@@ -90,3 +90,14 @@ class IncidentRun(BaseModel):
     token_usage: TokenUsage = Field(default_factory=TokenUsage)
     estimated_cost: Decimal = Decimal("0")
     final_diagnosis: Diagnosis | None = None
+    recovery_verified: bool = False
+
+    @model_validator(mode="after")
+    def _enforce_diagnosis_and_resolved_invariants(self) -> Self:
+        if self.final_diagnosis is not None and not self.final_diagnosis.evidence_ids:
+            raise ValueError("final diagnosis must cite evidence ids")
+        if self.status is IncidentStatus.DIAGNOSIS_COMPLETE and self.final_diagnosis is None:
+            raise ValueError("diagnosis_complete requires a final diagnosis with evidence ids")
+        if self.status is IncidentStatus.RESOLVED and not self.recovery_verified:
+            raise ValueError("cannot mark resolved without recovery verification")
+        return self

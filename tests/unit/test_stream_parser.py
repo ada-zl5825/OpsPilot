@@ -36,6 +36,8 @@ def test_parser_maps_holmes_readonly_stream() -> None:
     assert AgentEventType.TOOL_CALL in types
     assert AgentEventType.TOOL_RESULT in types
     assert AgentEventType.LLM_END in types
+    tool_result = next(event for event in events if event.event_type is AgentEventType.TOOL_RESULT)
+    assert tool_result.payload.get("ok") is True
     assert parser.extract_final_answer(raw) == "Lab is healthy. verification_code=OP-P0-LAB"
     usage = parser.extract_token_usage(raw)
     assert usage.total_tokens == 240

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from collections.abc import Iterable
 from datetime import UTC, datetime
 from typing import Any
@@ -96,13 +97,23 @@ def _payload_for(raw: HolmesSseEvent) -> dict[str, Any]:
     if raw.event == "tool_calling_result":
         result = data.get("result")
         result_obj = result if isinstance(result, dict) else {"data": result}
+        inner = _coerce_result_data(result_obj.get("data"))
+        ok = result_obj.get("ok")
+        if ok is None and isinstance(inner, dict):
+            ok = inner.get("ok")
+        artifact_ref = None
+        if isinstance(inner, dict):
+            artifact_ref = inner.get("artifact_ref")
         return {
             "tool_name": data.get("name") or data.get("tool_name"),
             "tool_call_id": data.get("tool_call_id"),
             "status": result_obj.get("status"),
-            "error": result_obj.get("error"),
+            "ok": ok,
+            "error": result_obj.get("error")
+            or (inner.get("error_type") if isinstance(inner, dict) else None),
             "params": result_obj.get("params") or {},
-            "result_summary": _summarize(result_obj.get("data")),
+            "artifact_ref": artifact_ref,
+            "result_summary": _summarize(inner if inner is not None else result_obj.get("data")),
         }
     if raw.event == "ai_answer_end":
         return {
@@ -117,6 +128,17 @@ def _payload_for(raw: HolmesSseEvent) -> dict[str, Any]:
             "pending_frontend_tool_calls": data.get("pending_frontend_tool_calls") or [],
         }
     return data
+
+
+def _coerce_result_data(value: Any) -> Any:
+    if isinstance(value, str):
+        text = value.strip()
+        if text.startswith("{") or text.startswith("["):
+            try:
+                return json.loads(text)
+            except json.JSONDecodeError:
+                return value
+    return value
 
 
 def _summarize(value: Any, *, limit: int = 240) -> str | None:

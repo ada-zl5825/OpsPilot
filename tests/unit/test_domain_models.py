@@ -2,6 +2,9 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import uuid4
 
+import pytest
+from pydantic import ValidationError
+
 from opspilot.domain import (
     Diagnosis,
     IncidentRun,
@@ -40,6 +43,39 @@ def test_diagnosis_requires_evidence_ids() -> None:
         confidence=0.8,
     )
     assert diagnosis.evidence_ids == [evidence_id]
+
+
+def test_diagnosis_rejects_empty_evidence_ids() -> None:
+    with pytest.raises(ValidationError):
+        Diagnosis(root_cause="guess", evidence_ids=[], confidence=0.1)
+
+
+def test_run_cannot_be_resolved_without_recovery_verification() -> None:
+    with pytest.raises(ValidationError, match="recovery verification"):
+        IncidentRun(
+            run_id=uuid4(),
+            source="manual",
+            status=IncidentStatus.RESOLVED,
+            model="azure/gpt-4o",
+            prompt_version="v0",
+            tool_catalog_version="v0",
+            started_at=datetime.now(UTC),
+            estimated_cost=Decimal("0"),
+        )
+
+
+def test_diagnosis_complete_requires_final_diagnosis() -> None:
+    with pytest.raises(ValidationError, match="final diagnosis"):
+        IncidentRun(
+            run_id=uuid4(),
+            source="manual",
+            status=IncidentStatus.DIAGNOSIS_COMPLETE,
+            model="azure/gpt-4o",
+            prompt_version="v0",
+            tool_catalog_version="v0",
+            started_at=datetime.now(UTC),
+            estimated_cost=Decimal("0"),
+        )
 
 
 def test_scenario_keeps_ground_truth_off_prompt_fields() -> None:

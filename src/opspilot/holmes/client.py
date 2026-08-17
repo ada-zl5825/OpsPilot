@@ -86,10 +86,11 @@ class HolmesClient:
         model: str | None = None,
         conversation_history: list[dict[str, Any]] | None = None,
         tool_decisions: Sequence[ToolDecision] | None = None,
+        run_id: UUID | None = None,
     ) -> HolmesAskResult:
         if tool_decisions and any(decision.approved for decision in tool_decisions):
             raise PermissionError("approved tool_decisions must go through the control plane")
-        run_id = uuid4()
+        run_id = run_id or uuid4()
         body: dict[str, Any] = {
             "ask": prompt,
             "stream": True,
@@ -143,6 +144,7 @@ class HolmesClient:
             prompt="continue",
             conversation_history=result.conversation_history,
             tool_decisions=decisions,
+            run_id=result.run_id,
         )
 
     async def _stream_chat(self, body: dict[str, Any]) -> list[HolmesSseEvent]:
