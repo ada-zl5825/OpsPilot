@@ -3,9 +3,9 @@ from pytest import CaptureFixture
 from opspilot.cli import main
 
 
-def test_health_reports_phase3(capsys: CaptureFixture[str]) -> None:
+def test_health_reports_phase4(capsys: CaptureFixture[str]) -> None:
     assert main(["health"]) == 0
-    assert '"phase": "3"' in capsys.readouterr().out
+    assert '"phase": "4"' in capsys.readouterr().out
 
 
 def test_investigate_prompt_only_s01_s04(capsys: CaptureFixture[str]) -> None:

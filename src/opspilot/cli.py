@@ -40,7 +40,7 @@ def main(argv: list[str] | None = None) -> int:
             json.dumps(
                 {
                     "status": "ok",
-                    "phase": "3",
+                    "phase": "4",
                     "prompt_version": PROMPT_VERSION,
                     "tool_catalog_version": TOOL_CATALOG_VERSION,
                 }

@@ -18,7 +18,7 @@ def create_app() -> FastAPI:
 
     @app.get("/health")
     def health() -> dict[str, str]:
-        return {"status": "ok", "version": __version__, "phase": "3"}
+        return {"status": "ok", "version": __version__, "phase": "4"}
 
     return app
 

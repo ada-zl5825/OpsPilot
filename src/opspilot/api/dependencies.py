@@ -6,6 +6,8 @@ from opspilot.investigation.store import (
     InvestigationStore,
     JsonlInvestigationStore,
 )
+from opspilot.remediation.service import ControlPlane
+from opspilot.remediation.store import JsonRemediationStore
 from opspilot.settings import Settings, get_settings
 
 
@@ -19,3 +21,10 @@ def investigation_store() -> InvestigationStore:
     if configured:
         return JsonlInvestigationStore(Path(configured))
     return InMemoryInvestigationStore()
+
+
+@lru_cache(maxsize=1)
+def remediation_plane() -> ControlPlane:
+    configured = get_settings().remediation_artifact_dir
+    store = JsonRemediationStore(Path(configured)) if configured else None
+    return ControlPlane(store=store)
