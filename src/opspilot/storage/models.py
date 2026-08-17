@@ -65,6 +65,45 @@ class HypothesisRow(Base):
     status: Mapped[str] = mapped_column(String(32))
 
 
+class RemediationProposalRow(Base):
+    __tablename__ = "remediation_proposals"
+
+    proposal_id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)
+    incident_run_id: Mapped[UUID] = mapped_column(Uuid, index=True)
+    digest: Mapped[str] = mapped_column(String(64), index=True)
+    status: Mapped[str] = mapped_column(String(32))
+    action_type: Mapped[str] = mapped_column(String(64))
+    payload: Mapped[dict[str, Any]] = mapped_column(_json_type())
+    idempotency_key: Mapped[str] = mapped_column(String(128), unique=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class ApprovalDecisionRow(Base):
+    __tablename__ = "approval_decisions"
+
+    proposal_id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)
+    decision: Mapped[str] = mapped_column(String(16))
+    actor_id: Mapped[str] = mapped_column(String(64))
+    actor_role: Mapped[str] = mapped_column(String(32))
+    reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    proposal_digest: Mapped[str] = mapped_column(String(64))
+    decided_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class ExecutionAttemptRow(Base):
+    __tablename__ = "execution_attempts"
+
+    execution_id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)
+    proposal_id: Mapped[UUID] = mapped_column(Uuid, index=True)
+    status: Mapped[str] = mapped_column(String(32))
+    command_plan: Mapped[list[str]] = mapped_column(_json_type())
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    output_ref: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    error_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
+
+
 class AgentEventRow(Base):
     __tablename__ = "agent_events"
 

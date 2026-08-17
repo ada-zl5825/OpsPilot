@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     holmes_model_name: str = "azure-default"
     holmes_timeout_seconds: float = 180.0
     investigation_artifact_dir: str = "artifacts/investigations"
+    remediation_artifact_dir: str = "artifacts/remediation"
 
     azure_openai_endpoint: str | None = None
     azure_openai_api_key: str | None = None
