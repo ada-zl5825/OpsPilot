@@ -41,11 +41,102 @@ services:
       retries: 8
       start_period: 10s
 
+  opspilot-observability:
+    profiles: ["holmes"]
+    build:
+      context: .
+      dockerfile: mcp_servers/Dockerfile
+    command: ["python", "-m", "mcp_servers.observability.server"]
+    ports:
+      - "8001:8001"
+    environment:
+      OPSPILOT_MCP_HOST: "0.0.0.0"
+      OPSPILOT_MCP_PORT: "8001"
+      OPSPILOT_MCP_BACKEND: live
+      OPSPILOT_ARTIFACT_DIR: /tmp/opspilot-artifacts
+      PROMETHEUS_URL: http://prometheus:9090
+      LOKI_URL: http://loki:3100
+      TEMPO_URL: http://tempo:3200
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import socket; socket.create_connection(('127.0.0.1', 8001), 3).close()",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+      start_period: 10s
+
+  opspilot-deployments:
+    profiles: ["holmes"]
+    build:
+      context: .
+      dockerfile: mcp_servers/Dockerfile
+    command: ["python", "-m", "mcp_servers.deployments.server"]
+    ports:
+      - "8002:8002"
+    environment:
+      OPSPILOT_MCP_HOST: "0.0.0.0"
+      OPSPILOT_MCP_PORT: "8002"
+      OPSPILOT_MCP_BACKEND: live
+      OPSPILOT_ARTIFACT_DIR: /tmp/opspilot-artifacts
+      CHECKOUT_URL: http://checkout:8081
+      PAYMENT_URL: http://payment:8082
+      GATEWAY_URL: http://gateway:8080
+      INVENTORY_URL: http://inventory:8083
+      NOTIFICATION_URL: http://notification:8084
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import socket; socket.create_connection(('127.0.0.1', 8002), 3).close()",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+      start_period: 10s
+
+  opspilot-runbooks:
+    profiles: ["holmes"]
+    build:
+      context: .
+      dockerfile: mcp_servers/Dockerfile
+    command: ["python", "-m", "mcp_servers.runbooks.server"]
+    ports:
+      - "8003:8003"
+    environment:
+      OPSPILOT_MCP_HOST: "0.0.0.0"
+      OPSPILOT_MCP_PORT: "8003"
+      OPSPILOT_ARTIFACT_DIR: /tmp/opspilot-artifacts
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import socket; socket.create_connection(('127.0.0.1', 8003), 3).close()",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+      start_period: 10s
+
   holmes:
     image: robustadev/holmes:0.39.0
     profiles: ["holmes"]
     depends_on:
       opspilot-mcp:
+        condition: service_started
+      opspilot-observability:
+        condition: service_started
+      opspilot-deployments:
+        condition: service_started
+      opspilot-runbooks:
         condition: service_started
     ports:
       - "5050:5050"
