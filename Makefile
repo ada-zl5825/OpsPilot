@@ -1,4 +1,4 @@
-.PHONY: install lint format typecheck test test-unit test-contract up down smoke holmes-up holmes-down holmes-smoke lab-up lab-down lab-verify
+.PHONY: install lint format typecheck test test-unit test-contract up down smoke holmes-up holmes-down holmes-smoke lab-up lab-down lab-verify investigate-prompt
 
 UV ?= python -m uv
 
@@ -47,6 +47,9 @@ lab-down:
 lab-verify:
 	$(UV) run python -m benchmarks.datasets.check_integrity
 	$(UV) run python -m simulator.harness --cycles 2
+
+investigate-prompt:
+	$(UV) run python -m opspilot.cli investigate --all --prompt-only
 
 smoke:
 	$(UV) run ruff check .
