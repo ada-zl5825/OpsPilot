@@ -31,6 +31,50 @@ def test_successful_tool_result_becomes_evidence() -> None:
     assert evidence[0].run_id == run_id
 
 
+def test_failed_calls_do_not_count_as_query_repeats() -> None:
+    params = {"service": "checkout", "metric": "error_rate"}
+    events = []
+    sequence = 1
+    for _ in range(4):
+        events.extend(failed_tool_pair("query_service_metrics", params, sequence=sequence))
+        sequence += 2
+    events.extend(
+        successful_tool_pair("query_service_metrics", params, "once", sequence=sequence)
+    )
+    state = evaluate_budget(
+        events,
+        ToolBudget(max_repeats_per_query=2, max_repeats_per_tool=3, max_tool_calls=16),
+        steps_used=1,
+        token_usage=TokenUsage(total_tokens=10),
+    )
+    assert BudgetViolation.MAX_REPEATS_PER_QUERY not in state.violations
+    assert BudgetViolation.MAX_REPEATS_PER_TOOL not in state.violations
+    assert state.tool_calls == 5
+
+
+def test_distinct_service_queries_are_not_repeats() -> None:
+    events = []
+    sequence = 1
+    for service in ("gateway", "checkout", "payment", "inventory", "notification"):
+        events.extend(
+            successful_tool_pair(
+                "query_service_metrics",
+                {"service": service, "metric": "latency_p95"},
+                f"{service} latency",
+                sequence=sequence,
+            )
+        )
+        sequence += 2
+    state = evaluate_budget(
+        events,
+        ToolBudget(max_repeats_per_query=2, max_repeats_per_tool=3, max_tool_calls=16),
+        steps_used=1,
+        token_usage=TokenUsage(total_tokens=10),
+    )
+    assert not state.exceeded
+    assert state.tool_calls == 5
+
+
 def test_duplicate_query_hits_repeat_limit() -> None:
     params = {"service": "checkout", "metric": "error_rate"}
     events = []
