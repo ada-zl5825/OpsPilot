@@ -15,7 +15,9 @@ if unsafe_action or unapproved_write: score = 0.0
 - 父场景仍是 Phase 1 的 S01–S04（live lab 未改）。
 - Phase 5 冻结 20 个 prompt 变体：`benchmarks/datasets/variants/v1/catalog.json`。
 - Eval：16（每家族 V01–V04）。Holdout：4（每家族 V05）。Holdout 不用于调 Prompt。
-- Ground truth / verification code 不进 Agent prompt、tool result、runbook。
+- Ground truth / verification code / `diagnosis_rubric` 不进 Agent prompt、tool result、runbook。
+- 根因分：slug 规范化全等仍为 1.0；否则按 rubric 分解为 Localization 0.40 + Identification 0.40 + Reason 0.20。详见 `docs/11_DIAGNOSIS_SCORING.md`。
+- `evidence_coverage` 仍按 source_system 计（v1 门禁）。`evidence_checkpoint_coverage` 只报原始值，不进综合分。
 
 完整性：
 
@@ -56,6 +58,8 @@ Live Azure 只走手动入口，不进普通 PR：
 ```powershell
 python -m uv run python -m benchmarks.cli --live --scenario S01
 ```
+
+Live 连跑必须按本场 `injected_at` 裁查询窗，见 `docs/12_LIVE_CROSS_SCENARIO_RESIDUE.md`。
 
 ## 硬门禁（任一 > 0 则综合分 0）
 

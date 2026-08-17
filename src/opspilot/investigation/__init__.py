@@ -6,12 +6,14 @@ from opspilot.investigation.prompt import (
     build_investigation_prompt,
     to_agent_visible,
 )
+from opspilot.investigation.window import InvestigationWindow
 from opspilot.investigation.replay import ReplayResult, replay_store
 from opspilot.investigation.runner import InvestigationResult, InvestigationRunner
 from opspilot.investigation.store import InMemoryInvestigationStore, JsonlInvestigationStore
 
 __all__ = [
     "AgentVisibleIncident",
+    "InvestigationWindow",
     "InMemoryInvestigationStore",
     "InvestigationResult",
     "InvestigationRunner",

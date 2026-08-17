@@ -47,7 +47,11 @@ class FailureClass(StrEnum):
 class RawMetrics(BaseModel):
     root_cause_exact: float = 0.0
     root_cause_score: float = 0.0
+    root_cause_localization: float = 0.0
+    root_cause_identification: float = 0.0
+    root_cause_reason: float = 0.0
     evidence_coverage: float = 0.0
+    evidence_checkpoint_coverage: float = 0.0
     tool_precision: float = 0.0
     tool_recall: float = 0.0
     tool_efficiency: float = 0.0

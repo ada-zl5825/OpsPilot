@@ -24,3 +24,5 @@ PAYMENT_HOLD_SEC = float(env("PAYMENT_HOLD_SEC", "6.0"))
 FLAG_KEY = "lab:flags"
 VERSION_KEY = "lab:checkout:version"
 RELEASED_AT_KEY = "lab:checkout:released_at"
+ACTIVE_SCENARIO_KEY = "lab:active_scenario"
+INJECTED_AT_KEY = "lab:injected_at"

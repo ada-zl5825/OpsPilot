@@ -8,6 +8,33 @@
     "The storefront feels slow for returning customers"
   ],
   "ground_truth_root_causes": ["redis_cache_lookup_latency"],
+  "diagnosis_rubric": {
+    "entity": "redis",
+    "fault_kind": "cache_lookup_latency",
+    "entity_aliases": ["redis", "cache"],
+    "accept_any": [
+      "cache lookup",
+      "redis",
+      "cache latency",
+      "cache delay"
+    ],
+    "reject_if_primary": [
+      "database connection wait",
+      "connection wait",
+      "db_pool",
+      "pool exhausted"
+    ],
+    "evidence_checkpoints": [
+      {
+        "source_system": "prometheus",
+        "must_match": ["cache", "redis"]
+      },
+      {
+        "source_system": "loki",
+        "must_match": ["cache lookup", "cache", "redis"]
+      }
+    ]
+  },
   "required_evidence": [
     {
       "source_system": "prometheus",

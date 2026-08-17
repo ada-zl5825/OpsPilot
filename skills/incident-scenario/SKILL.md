@@ -9,7 +9,7 @@ description: Design reproducible incident scenarios with fault injection, hidden
 
 Use `IncidentScenario` in `src/opspilot/domain/incidents.py`.
 
-`ground_truth_root_causes` and `verification_code` are scorer-only. Never put them in Agent prompts, tool results, or runbooks.
+`ground_truth_root_causes`, `diagnosis_rubric`, and `verification_code` are scorer-only. Never put them in Agent prompts, tool results, or runbooks.
 
 ## First matrix (Phase 1)
 

@@ -8,6 +8,32 @@
     "Orders fail before a receipt is issued"
   ],
   "ground_truth_root_causes": ["payment_downstream_deadline_exceeded"],
+  "diagnosis_rubric": {
+    "entity": "payment",
+    "fault_kind": "downstream_deadline",
+    "entity_aliases": ["payment"],
+    "accept_any": [
+      "payment",
+      "downstream deadline",
+      "deadline exceeded"
+    ],
+    "reject_if_primary": [
+      "database connection",
+      "connection wait",
+      "pool exhausted",
+      "order total"
+    ],
+    "evidence_checkpoints": [
+      {
+        "source_system": "tempo",
+        "must_match": ["payment"]
+      },
+      {
+        "source_system": "loki",
+        "must_match": ["payment", "deadline exceeded", "downstream deadline"]
+      }
+    ]
+  },
   "required_evidence": [
     {
       "source_system": "tempo",

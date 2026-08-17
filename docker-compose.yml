@@ -57,6 +57,7 @@ services:
       PROMETHEUS_URL: http://prometheus:9090
       LOKI_URL: http://loki:3100
       TEMPO_URL: http://tempo:3200
+      LAB_CONTROLLER_URL: http://controller:8090
     healthcheck:
       test:
         [
@@ -88,6 +89,7 @@ services:
       GATEWAY_URL: http://gateway:8080
       INVENTORY_URL: http://inventory:8083
       NOTIFICATION_URL: http://notification:8084
+      LAB_CONTROLLER_URL: http://controller:8090
     healthcheck:
       test:
         [

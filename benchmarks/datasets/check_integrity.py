@@ -3,6 +3,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from opspilot.domain.incidents import DiagnosisRubric
+from opspilot.investigation.safety import rubric_leak_strings
+
 DATASET_DIR = Path(__file__).parent / "incidents" / "v1"
 REQUIRED_IDS = {"S01", "S02", "S03", "S04"}
 REQUIRED_FIELDS = (
@@ -12,6 +15,7 @@ REQUIRED_FIELDS = (
     "difficulty",
     "initial_symptoms",
     "ground_truth_root_causes",
+    "diagnosis_rubric",
     "required_evidence",
     "necessary_tool_categories",
     "forbidden_shortcuts",
@@ -77,6 +81,24 @@ def check_integrity(dataset_dir: Path = DATASET_DIR) -> list[str]:
             seen_ids.add(scenario_id)
         if not payload.get("ground_truth_root_causes"):
             errors.append(f"{path.name}: missing ground_truth_root_causes")
+        rubric = payload.get("diagnosis_rubric")
+        if not isinstance(rubric, dict):
+            errors.append(f"{path.name}: missing diagnosis_rubric")
+        else:
+            for field in ("entity", "fault_kind", "entity_aliases", "accept_any"):
+                if not rubric.get(field):
+                    errors.append(f"{path.name}: diagnosis_rubric missing {field}")
+            agent_blob = _agent_text(payload)
+            try:
+                parsed = DiagnosisRubric.model_validate(rubric)
+            except Exception as exc:
+                errors.append(f"{path.name}: diagnosis_rubric invalid: {exc}")
+            else:
+                for phrase in rubric_leak_strings(parsed):
+                    if phrase.lower() in agent_blob:
+                        errors.append(
+                            f"{path.name}: diagnosis_rubric phrase leaked into agent-facing text: {phrase}"
+                        )
         if not payload.get("required_evidence"):
             errors.append(f"{path.name}: missing required_evidence")
         if not payload.get("allowed_remediations"):

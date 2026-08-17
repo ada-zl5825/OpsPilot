@@ -15,6 +15,7 @@ from opspilot.eval.scorer import score_trajectory
 from opspilot.holmes.client import HolmesClient
 from opspilot.investigation.runner import InvestigationRunner
 from opspilot.investigation.store import JsonlInvestigationStore
+from opspilot.investigation.window import InvestigationWindow, window_from_onset
 from opspilot.logging import get_logger
 from opspilot.settings import get_settings
 from opspilot.verifier.runner import VerifierRunner
@@ -69,7 +70,7 @@ def _one_per_family(variants: Sequence[ScenarioVariant]) -> list[ScenarioVariant
     return unique
 
 
-def _arm_lab(lab: LabClient, scenario_id: str) -> None:
+def _arm_lab(lab: LabClient, scenario_id: str) -> InvestigationWindow:
     lab.reset_all()
     body = lab.inject(scenario_id)
     if not body.get("injected"):
@@ -81,6 +82,10 @@ def _arm_lab(lab: LabClient, scenario_id: str) -> None:
             continue
     lab.wait_until(lab.prometheus_has_recent_checkout_traffic, timeout_sec=20)
     lab.wait_until(lambda: lab.loki_has_recent_service_logs("checkout"), timeout_sec=15)
+    injected_at = str(body.get("injected_at") or "")
+    if not injected_at:
+        raise RuntimeError(f"lab inject omitted injected_at for {scenario_id}")
+    return window_from_onset(injected_at)
 
 
 async def _run(variants: Sequence[ScenarioVariant], out_dir: Path) -> BenchmarkReport:
@@ -103,11 +108,12 @@ async def _run(variants: Sequence[ScenarioVariant], out_dir: Path) -> BenchmarkR
                     scenario_id=variant.scenario_id,
                 )
                 print(f"live start {variant.variant_id}", flush=True)
-                _arm_lab(lab, variant.scenario_id)
+                window = _arm_lab(lab, variant.scenario_id)
                 result = await runner.run(
                     variant.scenario_id,
                     source="benchmark",
                     user_report=variant.user_report,
+                    investigation_window=window,
                 )
                 lab.reset(variant.scenario_id)
                 scenario = parent_scenario(variant)
@@ -166,11 +172,12 @@ async def _run_verifier(variants: Sequence[ScenarioVariant], out_dir: Path) -> B
             runner = VerifierRunner(client, store, settings=settings)
             for variant in variants:
                 print(f"verify start {variant.variant_id}", flush=True)
-                _arm_lab(lab, variant.scenario_id)
+                window = _arm_lab(lab, variant.scenario_id)
                 result = await runner.run(
                     variant.scenario_id,
                     source="benchmark",
                     user_report=variant.user_report,
+                    investigation_window=window,
                 )
                 lab.reset(variant.scenario_id)
                 scenario = parent_scenario(variant)

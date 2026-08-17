@@ -57,6 +57,11 @@ class LabClient:
         response.raise_for_status()
         return _json_object(response)
 
+    def active(self) -> dict[str, Any]:
+        response = self._http.get(f"{CONTROLLER_URL}/v1/active")
+        response.raise_for_status()
+        return _json_object(response)
+
     def place_order(self, timeout: float = 8.0) -> httpx.Response:
         return self._http.post(
             f"{GATEWAY_URL}/api/orders",

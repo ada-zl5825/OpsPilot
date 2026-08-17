@@ -32,3 +32,5 @@ def test_variant_prompts_exclude_ground_truth() -> None:
         assert scenario.verification_code not in prompt
         for cause in scenario.ground_truth_root_causes:
             assert cause not in prompt
+        assert scenario.diagnosis_rubric is not None
+        assert scenario.diagnosis_rubric.fault_kind not in prompt

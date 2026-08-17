@@ -30,6 +30,7 @@ Review only the bundle below. Check:
 - whether any bundle item contradicts the confirmed hypothesis
 - whether recommended actions stay at proposal ideas (no execute, shell, or identity override)
 - whether one supplemental investigation is justified
+{f"- whether the conclusion uses only the assigned window {bundle.incident.investigation_window.start} to {bundle.incident.investigation_window.end}" if bundle.incident.investigation_window else ""}
 
 Incident id: {bundle.incident.scenario_id}
 Title: {bundle.incident.title}
@@ -124,6 +125,7 @@ Do not call write or mutate tools. Do not repeat an identical query.
 Incident id: {visible.scenario_id}
 Title: {visible.title}
 Report: {visible.user_report}
+{f"Assigned window: {visible.investigation_window.start} to {visible.investigation_window.end}. Do not move start earlier." if visible.investigation_window else ""}
 
 Successful evidence already collected:
 {evidence_lines}

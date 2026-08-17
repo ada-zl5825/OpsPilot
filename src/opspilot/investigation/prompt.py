@@ -6,6 +6,7 @@ from opspilot.domain.incidents import IncidentScenario
 from opspilot.investigation.budget import ToolBudget
 from opspilot.investigation.constants import LAB_SERVICES, PHASE2_READ_TOOLS, PROMPT_VERSION
 from opspilot.investigation.safety import assert_agent_text_is_safe
+from opspilot.investigation.window import InvestigationWindow
 
 
 class AgentVisibleIncident(BaseModel):
@@ -16,11 +17,14 @@ class AgentVisibleIncident(BaseModel):
     difficulty: str
     initial_symptoms: list[str] = Field(default_factory=list)
     user_report: str = ""
+    investigation_window: InvestigationWindow | None = None
 
 
 def to_agent_visible(
     scenario: IncidentScenario,
     user_report: str | None = None,
+    *,
+    investigation_window: InvestigationWindow | None = None,
 ) -> AgentVisibleIncident:
     report = user_report
     if report is None:
@@ -32,6 +36,7 @@ def to_agent_visible(
         difficulty=scenario.difficulty,
         initial_symptoms=list(scenario.initial_symptoms),
         user_report=report,
+        investigation_window=investigation_window,
     )
 
 
@@ -44,6 +49,18 @@ def build_investigation_prompt(
     symptoms = "\n".join(f"- {item}" for item in visible.initial_symptoms) or "- (none provided)"
     tools = "\n".join(f"- {name}" for name in PHASE2_READ_TOOLS)
     services = ", ".join(LAB_SERVICES)
+    window_block = ""
+    if visible.investigation_window is not None:
+        window_block = f"""
+Assigned investigation window (control plane clock; not a root-cause hint):
+- start: {visible.investigation_window.start}
+- end: {visible.investigation_window.end}
+Use this start/end on every metrics, logs, traces, and deployments query.
+Do not move start earlier. Rows before start belong to a previous incident.
+severity=error can miss warning or info saturation; if error logs do not explain the symptom, retry severity=all and other metric names from the tool schema.
+If more than one service shows errors, compare traces before treating the first log line as the cause.
+rejected_hypotheses must list at least one alternative you checked and discarded.
+"""
     evidence_block = ""
     if known_evidence:
         listed = "\n".join(f"- {item}" for item in known_evidence)
@@ -79,7 +96,7 @@ Tool parameter rules:
 - Empty points, aggregated_value null, or returned=0 is not proof the service is healthy.
 - If a result includes suggested_fix, follow it before concluding.
 - Do not pass raw PromQL, LogQL, or shell strings.
-
+{window_block}
 Budgets (the control plane will stop you if you exceed them):
 - max investigation turns: {budget.max_steps}
 - max tool calls: {budget.max_tool_calls} (every attempt counts, including failures)

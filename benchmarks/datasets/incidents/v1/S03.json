@@ -8,6 +8,31 @@
     "New orders fail immediately after the storefront update"
   ],
   "ground_truth_root_causes": ["checkout_regression_in_release_1_4_2"],
+  "diagnosis_rubric": {
+    "entity": "checkout_release",
+    "fault_kind": "bad_release",
+    "entity_aliases": ["1.4.2", "release 1.4.2", "version 1.4.2"],
+    "accept_any": [
+      "1.4.2",
+      "regression",
+      "release 1.4.2"
+    ],
+    "reject_if_primary": [
+      "database connection wait",
+      "connection wait",
+      "pool exhausted"
+    ],
+    "evidence_checkpoints": [
+      {
+        "source_system": "deployments",
+        "must_match": ["1.4.2", "release"]
+      },
+      {
+        "source_system": "loki",
+        "must_match": ["1.4.2", "pricing", "order total", "regression"]
+      }
+    ]
+  },
   "required_evidence": [
     {
       "source_system": "deployments",

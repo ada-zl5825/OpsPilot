@@ -4,7 +4,7 @@
 
 | 模型 | 职责 |
 |---|---|
-| `IncidentScenario` | 冻结场景。`ground_truth_root_causes` 仅供 Scorer |
+| `IncidentScenario` | 冻结场景。`ground_truth_root_causes` 与 `diagnosis_rubric` 仅供 Scorer |
 | `IncidentRun` | 一次调查运行，含模型、Prompt/Tool 版本、token、诊断 |
 | `Evidence` | 工具证据摘要；原文进 artifact，不进轨迹表 |
 | `Hypothesis` | 根因假设与证据引用 |

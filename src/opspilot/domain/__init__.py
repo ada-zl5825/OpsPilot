@@ -3,6 +3,8 @@ from opspilot.domain.evidence import Evidence, Hypothesis
 from opspilot.domain.experiments import ExperimentCondition
 from opspilot.domain.incidents import (
     Diagnosis,
+    DiagnosisRubric,
+    EvidenceCheckpoint,
     IncidentRun,
     IncidentScenario,
     IncidentStatus,
@@ -13,7 +15,9 @@ from opspilot.domain.remediation import ExecutionAttempt, ProposalStatus, Remedi
 __all__ = [
     "ApprovalDecision",
     "Diagnosis",
+    "DiagnosisRubric",
     "Evidence",
+    "EvidenceCheckpoint",
     "ExecutionAttempt",
     "ExperimentCondition",
     "Hypothesis",

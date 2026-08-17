@@ -4,6 +4,7 @@ from opspilot.investigation.prompt import (
     build_investigation_prompt,
     to_agent_visible,
 )
+from opspilot.investigation.window import InvestigationWindow
 from opspilot.investigation.safety import find_ground_truth_leaks
 from opspilot.lab.scenarios import REQUIRED_SCENARIO_IDS, load_scenarios, scenario_by_id
 
@@ -11,6 +12,7 @@ from opspilot.lab.scenarios import REQUIRED_SCENARIO_IDS, load_scenarios, scenar
 def test_agent_visible_incident_excludes_scorer_fields() -> None:
     fields = set(AgentVisibleIncident.model_fields)
     assert "ground_truth_root_causes" not in fields
+    assert "diagnosis_rubric" not in fields
     assert "verification_code" not in fields
     assert "required_evidence" not in fields
     assert "allowed_remediations" not in fields
@@ -23,6 +25,11 @@ def test_to_agent_visible_drops_ground_truth() -> None:
     assert scenario.ground_truth_root_causes[0] not in dumped
     assert scenario.verification_code not in dumped
     assert scenario.required_evidence[0].description not in dumped
+    assert scenario.diagnosis_rubric is not None
+    assert scenario.diagnosis_rubric.fault_kind not in dumped
+    for phrase in scenario.diagnosis_rubric.accept_any:
+        if phrase.lower() not in {"checkout", "redis", "cache", "payment"}:
+            assert phrase not in dumped
 
 
 def test_prompts_for_s01_s04_exclude_ground_truth() -> None:
@@ -36,3 +43,18 @@ def test_prompts_for_s01_s04_exclude_ground_truth() -> None:
         assert "Final Diagnosis" in prompt or "evidence_ids" in prompt
         assert "Omit path" in prompt
         assert "clock minute" in prompt
+        assert "Assigned investigation window" not in prompt
+
+
+def test_assigned_window_is_in_prompt_and_stays_off_ground_truth() -> None:
+    scenario = scenario_by_id("S01")
+    window = InvestigationWindow(start="2026-08-17T14:43:00Z", end="2026-08-17T14:44:00Z")
+    prompt = build_investigation_prompt(
+        to_agent_visible(scenario, investigation_window=window),
+        ToolBudget(),
+    )
+    assert "2026-08-17T14:43:00Z" in prompt
+    assert "Do not move start earlier" in prompt
+    assert find_ground_truth_leaks(prompt, scenario) == []
+    assert scenario.ground_truth_root_causes[0] not in prompt
+    assert "connection pool" not in prompt.lower()

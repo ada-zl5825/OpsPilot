@@ -8,6 +8,29 @@
     "Checkout requests are returning 5xx"
   ],
   "ground_truth_root_causes": ["checkout_database_connection_pool_exhausted"],
+  "diagnosis_rubric": {
+    "entity": "checkout",
+    "fault_kind": "pool_wait",
+    "entity_aliases": ["checkout"],
+    "accept_any": [
+      "connection wait",
+      "connection pool",
+      "pool exhausted",
+      "db_pool",
+      "request deadline"
+    ],
+    "reject_if_primary": [],
+    "evidence_checkpoints": [
+      {
+        "source_system": "loki",
+        "must_match": ["connection wait", "connection pool", "pool exhausted"]
+      },
+      {
+        "source_system": "prometheus",
+        "must_match": ["db_pool", "pool"]
+      }
+    ]
+  },
   "required_evidence": [
     {
       "source_system": "prometheus",

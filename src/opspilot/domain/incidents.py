@@ -46,6 +46,24 @@ class EvidenceExpectation(BaseModel):
     required: bool = True
 
 
+class EvidenceCheckpoint(BaseModel):
+    """Scorer-only observable signal. Never enter Agent context."""
+
+    source_system: str
+    must_match: list[str] = Field(min_length=1)
+
+
+class DiagnosisRubric(BaseModel):
+    """Scorer-only structured ground truth. Never enter Agent context."""
+
+    entity: str
+    fault_kind: str
+    entity_aliases: list[str] = Field(min_length=1)
+    accept_any: list[str] = Field(min_length=1)
+    reject_if_primary: list[str] = Field(default_factory=list)
+    evidence_checkpoints: list[EvidenceCheckpoint] = Field(default_factory=list)
+
+
 class RecoveryCheck(BaseModel):
     check_id: str
     description: str
@@ -67,6 +85,7 @@ class IncidentScenario(BaseModel):
     difficulty: Literal["L1", "L2", "L3", "L4", "L5"]
     initial_symptoms: list[str]
     ground_truth_root_causes: list[str]
+    diagnosis_rubric: DiagnosisRubric | None = None
     required_evidence: list[EvidenceExpectation]
     necessary_tool_categories: set[str]
     forbidden_shortcuts: list[str]

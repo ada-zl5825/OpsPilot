@@ -1,5 +1,5 @@
 import pytest
-from simulator.fault_injection.actions import inject, reset, reset_all, status
+from simulator.fault_injection.actions import active, inject, reset, reset_all, status
 
 
 class FakeRedis:
@@ -22,6 +22,9 @@ class FakeRedis:
     async def get(self, name: str) -> str | None:
         return self.values.get(name)
 
+    async def delete(self, name: str) -> None:
+        self.values.pop(name, None)
+
 
 @pytest.mark.asyncio
 async def test_inject_reset_are_idempotent_for_two_cycles() -> None:
@@ -31,8 +34,10 @@ async def test_inject_reset_are_idempotent_for_two_cycles() -> None:
             first = await inject(redis, scenario_id)
             second = await inject(redis, scenario_id)
             assert first["injected"] is True
+            assert first["injected_at"]
             assert second["injected"] is True
             assert second["already"] is True
+            assert (await active(redis))["scenario_id"] == scenario_id
             assert (await status(redis, scenario_id))["injected"] is True
             first_reset = await reset(redis, scenario_id)
             second_reset = await reset(redis, scenario_id)
@@ -49,3 +54,4 @@ async def test_reset_all_clears_every_flag() -> None:
     await reset_all(redis)
     assert (await status(redis, "S01"))["injected"] is False
     assert (await status(redis, "S04"))["injected"] is False
+    assert (await active(redis))["active"] is False

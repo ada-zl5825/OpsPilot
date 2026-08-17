@@ -13,6 +13,8 @@ def test_phase1_scenarios_load_and_stay_off_prompt() -> None:
         assert scenario.verification_code not in prompt
         for cause in scenario.ground_truth_root_causes:
             assert cause not in prompt
+        assert scenario.diagnosis_rubric is not None
+        assert scenario.diagnosis_rubric.fault_kind not in prompt
         assert scenario.required_evidence
         assert scenario.allowed_remediations
         assert scenario.recovery_checks

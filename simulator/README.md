@@ -36,7 +36,7 @@ One command starts the shop, fault controller, traffic, and observability stack.
 | S03 | `POST /v1/scenarios/S03/inject` | `POST /v1/scenarios/S03/reset` |
 | S04 | `POST /v1/scenarios/S04/inject` | `POST /v1/scenarios/S04/reset` |
 
-Inject and reset are idempotent. `POST /v1/reset` clears every flag. Controller responses do not include ground truth or verification codes.
+Inject and reset are idempotent. `POST /v1/reset` clears every flag. `GET /v1/active` returns the current inject onset only. Controller responses do not include ground truth or verification codes.
 
 Place an order through the storefront:
 

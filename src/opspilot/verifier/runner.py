@@ -18,6 +18,7 @@ from opspilot.investigation.evidence import collect_evidence, tool_name_of
 from opspilot.investigation.outcome import StopReason, decide_outcome, is_successful_status
 from opspilot.investigation.progress import evaluate_progress
 from opspilot.investigation.prompt import to_agent_visible
+from opspilot.investigation.window import InvestigationWindow
 from opspilot.investigation.roles import VERIFIER_ROLE
 from opspilot.investigation.runner import HolmesAskPort, InvestigationResult, InvestigationRunner
 from opspilot.investigation.store import InvestigationStore
@@ -98,6 +99,7 @@ class VerifierRunner:
         run_id: UUID | None = None,
         model: str | None = None,
         user_report: str | None = None,
+        investigation_window: InvestigationWindow | None = None,
     ) -> VerifierResult:
         investigation = await self._investigator.run(
             scenario_id,
@@ -105,9 +107,14 @@ class VerifierRunner:
             run_id=run_id,
             model=model,
             user_report=user_report,
+            investigation_window=investigation_window,
         )
         scenario = scenario_by_id(scenario_id)
-        visible = to_agent_visible(scenario, user_report=user_report)
+        visible = to_agent_visible(
+            scenario,
+            user_report=user_report,
+            investigation_window=investigation_window,
+        )
         events = list(investigation.events)
         usage = investigation.run.token_usage
         followup_prompt: str | None = None

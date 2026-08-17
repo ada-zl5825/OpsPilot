@@ -76,6 +76,8 @@ Verifier 修好后再跑：`artifacts/benchmarks-live-verify/d83f0a51-f229-4715-
 - 不把 ground-truth slug 写进 prompt 来抬根因分。
 - 不晋升 Verifier，不加 Multi-Agent。
 
+空证据修好后根因仍为 0 的打分层，见 `docs/11_DIAGNOSIS_SCORING.md`。连跑残留见 `docs/12_LIVE_CROSS_SCENARIO_RESIDUE.md`。
+
 ## 如何复验
 
 ```powershell

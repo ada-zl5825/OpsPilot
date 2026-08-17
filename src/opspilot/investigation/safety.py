@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from opspilot.domain.incidents import IncidentScenario
+from opspilot.domain.incidents import DiagnosisRubric, IncidentScenario
 
 FORBIDDEN_PROMPT_HINTS = (
     "ground_truth",
@@ -20,6 +20,23 @@ FORBIDDEN_PROMPT_HINTS = (
 )
 
 
+_GENERIC_RUBRIC_TOKENS = frozenset(
+    {
+        "checkout",
+        "redis",
+        "cache",
+        "payment",
+        "release",
+        "pool",
+        "latency",
+        "database",
+        "downstream",
+        "deadline",
+        "regression",
+    }
+)
+
+
 def scorer_only_strings(scenario: IncidentScenario) -> list[str]:
     values: list[str] = []
     values.extend(scenario.ground_truth_root_causes)
@@ -30,7 +47,23 @@ def scorer_only_strings(scenario: IncidentScenario) -> list[str]:
     values.extend(item.description for item in scenario.recovery_checks)
     values.extend(scenario.forbidden_shortcuts)
     values.extend(scenario.distractors)
+    values.extend(rubric_leak_strings(scenario.diagnosis_rubric))
     return [item for item in values if item]
+
+
+def rubric_leak_strings(rubric: DiagnosisRubric | None) -> list[str]:
+    if rubric is None:
+        return []
+    candidates = [rubric.fault_kind, *rubric.accept_any, *rubric.reject_if_primary]
+    candidates.extend(rubric.entity_aliases)
+    for checkpoint in rubric.evidence_checkpoints:
+        candidates.extend(checkpoint.must_match)
+    leaks: list[str] = []
+    for item in candidates:
+        if not item or item.lower() in _GENERIC_RUBRIC_TOKENS:
+            continue
+        leaks.append(item)
+    return leaks
 
 
 def find_ground_truth_leaks(text: str, scenario: IncidentScenario) -> list[str]:

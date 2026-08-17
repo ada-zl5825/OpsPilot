@@ -6,7 +6,7 @@ from typing import Any
 from mcp_servers.common.errors import structured_error
 from mcp_servers.common.runtime import ToolRuntime, invoke_tool
 from mcp_servers.common.schemas import SERVICE_NAMES
-from mcp_servers.common.time_range import TimeWindow
+from mcp_servers.common.time_range import TimeWindow, apply_window_flags
 from mcp_servers.common.validation import parse_model, validation_failure, window_or_error
 from mcp_servers.observability.backends import (
     LogsBackend,
@@ -63,8 +63,6 @@ def query_service_metrics(
             "path_ignored": path_ignored,
             "points": points,
         }
-        if window.end_extended:
-            payload["end_extended"] = True
         if empty:
             payload["suggested_fix"] = (
                 "omit path and retry; empty series is not evidence that the service is healthy"
@@ -73,7 +71,7 @@ def query_service_metrics(
             payload["suggested_fix"] = (
                 "no series matched the requested path; returned service-wide series"
             )
-        return payload
+        return apply_window_flags(payload, window)
 
     return invoke_tool(tool, _run, runtime, params=parsed.model_dump(), time_range=window.as_dict())
 
@@ -113,13 +111,11 @@ def query_service_logs(
             "empty": not entries,
             "entries": entries,
         }
-        if window.end_extended:
-            payload["end_extended"] = True
         if not entries:
             payload["suggested_fix"] = (
                 "try severity=all or a wider window; zero lines is not proof there is no incident"
             )
-        return payload
+        return apply_window_flags(payload, window)
 
     return invoke_tool(tool, _run, runtime, params=parsed.model_dump(), time_range=window.as_dict())
 
@@ -181,13 +177,11 @@ def get_trace_summary(
             },
             "traces": traces,
         }
-        if window.end_extended:
-            payload["end_extended"] = True
         if not traces:
             payload["suggested_fix"] = (
                 "widen the window or omit min_duration_ms; empty traces are not a healthy signal"
             )
-        return payload
+        return apply_window_flags(payload, window)
 
     return invoke_tool(tool, _run, runtime, params=parsed.model_dump(), time_range=window.as_dict())
 

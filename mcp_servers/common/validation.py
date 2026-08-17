@@ -6,7 +6,7 @@ from pydantic import ValidationError
 
 from mcp_servers.common.errors import structured_error
 from mcp_servers.common.null_args import drop_null_arguments
-from mcp_servers.common.time_range import TimeWindow, parse_time_range
+from mcp_servers.common.time_range import TimeWindow, clip_to_active_incident, parse_time_range
 
 
 def parse_model(model_type: type[Any], params: dict[str, Any]) -> Any:
@@ -38,7 +38,7 @@ def window_or_error(
     params: dict[str, Any],
 ) -> TimeWindow | dict[str, Any]:
     try:
-        return parse_time_range(start, end)
+        return clip_to_active_incident(parse_time_range(start, end))
     except ValueError as exc:
         return validation_failure(tool, exc, params, {"start": start, "end": end})
 

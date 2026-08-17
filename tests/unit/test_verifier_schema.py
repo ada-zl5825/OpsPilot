@@ -25,6 +25,7 @@ def _budget() -> SharedBudgetSnapshot:
 def test_investigator_bundle_excludes_scorer_fields() -> None:
     fields = set(InvestigatorBundle.model_fields)
     assert "ground_truth_root_causes" not in fields
+    assert "diagnosis_rubric" not in fields
     assert "verification_code" not in fields
     assert "required_evidence" not in fields
     scenario = scenario_by_id("S01")

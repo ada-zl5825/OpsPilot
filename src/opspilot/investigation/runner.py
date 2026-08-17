@@ -26,6 +26,7 @@ from opspilot.investigation.prompt import (
     build_investigation_prompt,
     to_agent_visible,
 )
+from opspilot.investigation.window import InvestigationWindow
 from opspilot.investigation.safety import assert_no_ground_truth
 from opspilot.investigation.store import InvestigationStore
 from opspilot.lab.scenarios import scenario_by_id
@@ -93,9 +94,14 @@ class InvestigationRunner:
         run_id: UUID | None = None,
         model: str | None = None,
         user_report: str | None = None,
+        investigation_window: InvestigationWindow | None = None,
     ) -> InvestigationResult:
         scenario = scenario_by_id(scenario_id)
-        visible = to_agent_visible(scenario, user_report=user_report)
+        visible = to_agent_visible(
+            scenario,
+            user_report=user_report,
+            investigation_window=investigation_window,
+        )
         prompt = build_investigation_prompt(visible, self._budget)
         assert_no_ground_truth(prompt, scenario)
 

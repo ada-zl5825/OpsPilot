@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 import redis.asyncio as redis
 from fastapi import FastAPI, HTTPException
 
-from simulator.fault_injection.actions import SCENARIO_IDS, inject, reset, reset_all, status
+from simulator.fault_injection.actions import SCENARIO_IDS, active, inject, reset, reset_all, status
 from simulator.services.common.config import REDIS_URL, SERVICE_NAME
 from simulator.services.common.http import create_service
 from simulator.services.common.otel import init_otel
@@ -34,6 +34,11 @@ def version_info() -> dict[str, str]:
 @app.get("/v1/scenarios")
 def list_scenarios() -> dict[str, object]:
     return {"scenarios": list(SCENARIO_IDS)}
+
+
+@app.get("/v1/active")
+async def active_incident() -> dict[str, object]:
+    return await active(app.state.redis)
 
 
 @app.get("/v1/scenarios/{scenario_id}")

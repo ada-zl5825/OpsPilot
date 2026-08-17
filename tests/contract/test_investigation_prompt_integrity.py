@@ -19,5 +19,7 @@ def test_phase3_prompts_pass_dataset_anti_cheat_rules() -> None:
         assert scenario.verification_code not in prompt
         for cause in scenario.ground_truth_root_causes:
             assert cause not in prompt
+        assert scenario.diagnosis_rubric is not None
+        assert scenario.diagnosis_rubric.fault_kind not in prompt
         for item in scenario.required_evidence:
             assert item.description not in prompt
