@@ -59,7 +59,7 @@ Live Azure 只走手动入口，不进普通 PR：
 python -m uv run python -m benchmarks.cli --live --scenario S01
 ```
 
-Live 连跑必须按本场 `injected_at` 裁查询窗，见 `docs/12_LIVE_CROSS_SCENARIO_RESIDUE.md`。
+Live 连跑必须按本场 `injected_at` 裁查询窗，并在 `reset_all` 之后等到上场 5xx/error 静默再 inject。见 `docs/12_LIVE_CROSS_SCENARIO_RESIDUE.md`、`docs/13_LIVE_QUIET_BEFORE_INJECT.md`。
 
 ## 硬门禁（任一 > 0 则综合分 0）
 

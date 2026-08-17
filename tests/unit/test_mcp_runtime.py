@@ -8,6 +8,7 @@ from mcp_servers.common.errors import structured_error
 from mcp_servers.common.redaction import REDACTED, redact_mapping
 from mcp_servers.common.runtime import ToolRuntime, invoke_tool
 from mcp_servers.common.time_range import (
+    ACTIVE_CLIP_SLACK_SECONDS,
     MAX_WINDOW_SECONDS,
     clip_to_active_incident,
     parse_time_range,
@@ -52,8 +53,9 @@ def test_active_incident_clips_start_and_fail_opens_without_controller() -> None
     wide = parse_time_range("2026-08-17T14:30:00Z", "2026-08-17T14:44:00Z")
     onset = datetime(2026, 8, 17, 14, 43, tzinfo=UTC)
     clipped = clip_to_active_incident(wide, not_before=onset)
+    assert ACTIVE_CLIP_SLACK_SECONDS == 5
     assert clipped.start_clipped is True
-    assert clipped.start >= onset - timedelta(seconds=30)
+    assert clipped.start == onset - timedelta(seconds=ACTIVE_CLIP_SLACK_SECONDS)
     assert clip_to_active_incident(wide).start_clipped is False
 
 

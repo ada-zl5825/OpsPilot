@@ -38,7 +38,7 @@ S02 的 cache 行是 **warning**（`checkout/main.py`），`severity=error` 本�
 - inject 写入 `lab:active_scenario` + `lab:injected_at`。
 - `GET /v1/active` 返回 `{active, scenario_id, injected_at}`，不含 ground truth / verification code。
 - reset / reset_all 清掉 active。
-- 只读 MCP 的 `window_or_error`：若设置了 `LAB_CONTROLLER_URL`，把 `start` 抬到 `injected_at − 30s`（刮取余量）。模型仍传 10 分钟，也带不走上场 Loki/Prom。
+- 只读 MCP 的 `window_or_error`：若设置了 `LAB_CONTROLLER_URL`，把 `start` 抬到本场 `injected_at` 减去刮取余量。当时余量是 30s；`df7f428c` 之后改为 5s，见 `docs/13_LIVE_QUIET_BEFORE_INJECT.md`。模型仍传 10 分钟，也带不走上场 Loki/Prom。
 - 裁剪后工具结果带 `start_clipped: true`。
 - Controller 不可达则不裁（holmes-only / 单测 fail-open）。
 
@@ -89,3 +89,5 @@ python -m uv run python -m benchmarks.cli --live --out artifacts/benchmarks-live
 | S02 | 不再因为上场 error 行而稳 0；真分开 cache 才能上分 |
 | S03 | 仍应 ≥ 0.7；不再被上场 wait 污染到 0 |
 | S04 | 0 只应出现在没看 trace / 没点到 payment 时，而不是抄 DB |
+
+复验 `df7f428c`：裁窗生效，但 30s slack + 无静默等待仍吃上场尾部。后续见 `docs/13_LIVE_QUIET_BEFORE_INJECT.md`。

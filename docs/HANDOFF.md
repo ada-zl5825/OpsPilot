@@ -36,9 +36,9 @@ Holmes 上游 fork：https://github.com/ada-zl5825/holmesgpt
 | Phase 4 unit + contract + security | 未批准/篡改/过期/跨 ns/digest 不匹配均不能写；Agent 看不到 execute/rollback；typed command only |
 | Phase 5 offline + gate | 20 变体（16 eval / 4 holdout）；Deterministic 综合分 1.0；Single-Agent 0.8372；unsafe/未审批写综合分 0 |
 
-Live Azure 调查曾因可选参数 `null` 被 FastMCP 拒绝、以及按工具名计重复预算而失败。修复记录：`docs/09_LIVE_AZURE_INVESTIGATION_FIX.md`。随后根因仍为 0，是因为空序列被当成健康信号。修复记录：`docs/10_LIVE_EMPTY_EVIDENCE_FIX.md`。Verifier 不得把 Investigator 查到的措辞（例如 “connection pool”）当成 prompt 泄题。空证据修好后，根因仍为 0 是因为自然语言对不上冻结 slug，且 S02–S04 易收成同一套 DB 叙事。研究与契约：`docs/11_DIAGNOSIS_SCORING.md`。Scorer 现用 `diagnosis_rubric`。Live 连跑会把 S01 的 Loki/Prom 带进后三场 10 分钟窗；本场 onset 裁窗见 `docs/12_LIVE_CROSS_SCENARIO_RESIDUE.md`。不要据此重做 Phase 0–6 或开始 Multi-Agent。
+Live Azure 调查曾因可选参数 `null` 被 FastMCP 拒绝、以及按工具名计重复预算而失败。修复记录：`docs/09_LIVE_AZURE_INVESTIGATION_FIX.md`。随后根因仍为 0，是因为空序列被当成健康信号。修复记录：`docs/10_LIVE_EMPTY_EVIDENCE_FIX.md`。Verifier 不得把 Investigator 查到的措辞（例如 “connection pool”）当成 prompt 泄题。空证据修好后，根因仍为 0 是因为自然语言对不上冻结 slug，且 S02–S04 易收成同一套 DB 叙事。研究与契约：`docs/11_DIAGNOSIS_SCORING.md`。Scorer 现用 `diagnosis_rubric`。Live 连跑会把 S01 的 Loki/Prom 带进后三场 10 分钟窗；本场 onset 裁窗见 `docs/12_LIVE_CROSS_SCENARIO_RESIDUE.md`。`df7f428c` 证明裁窗生效，但 30s slack 仍吃上场尾部；reset 后先静默再 inject 见 `docs/13_LIVE_QUIET_BEFORE_INJECT.md`。不要据此重做 Phase 0–6 或开始 Multi-Agent。
 
-**下一步不要做 UI / Multi-Agent 编排 / SFT。Phase 7 仅在轨迹数据集与 Benchmark 继续冻结且明确要求时才开始。真要抬 S02–S04 的真实根因，是诊断 JSON / Verifier 对照 rubric，不是 rebuild。**
+**下一步不要做 UI / Multi-Agent 编排 / SFT。Phase 7 仅在轨迹数据集与 Benchmark 继续冻结且明确要求时才开始。先按 `docs/13_LIVE_QUIET_BEFORE_INJECT.md` 重跑 live。若 S02/S04 在窗已干净后仍写错，才是诊断 JSON / Verifier 对照 rubric，不是再 rebuild。**
 
 ## 新窗口开场 Prompt（可直接粘贴）
 

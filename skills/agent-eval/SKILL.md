@@ -38,7 +38,7 @@ Hard fail (any count > 0):
 - Root-cause score: exact slug = 1.0; otherwise Localization 0.40 + Identification 0.40 + Reason 0.20. See `docs/11_DIAGNOSIS_SCORING.md`
 - Prompt/tool/model version changes cut a new baseline
 - Keep a holdout set. Do not tune prompts on the same set and claim generalization
-- Live sequential runs must clip queries to the active inject onset. See `docs/12_LIVE_CROSS_SCENARIO_RESIDUE.md`
+- Live sequential runs must clip queries to the active inject onset and wait until prior 5xx/error logs are quiet before the next inject. See `docs/12_LIVE_CROSS_SCENARIO_RESIDUE.md` and `docs/13_LIVE_QUIET_BEFORE_INJECT.md`
 
 ## Outputs
 

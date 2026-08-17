@@ -41,6 +41,8 @@ Do not advertise `anyOf` / `null` on optional strings. Azure rejects that schema
 
 If an optional path filter matches no series, retry without path and set `path_ignored`. Empty successful results must include `empty` and `suggested_fix`. Do not treat `(last-first)/duration` as aggregation for metrics that are already `rate()` / ratios. See `docs/10_LIVE_EMPTY_EVIDENCE_FIX.md`.
 
+When `LAB_CONTROLLER_URL` is set, raise query `start` to `injected_at − 5s`. See `docs/12_LIVE_CROSS_SCENARIO_RESIDUE.md` and `docs/13_LIVE_QUIET_BEFORE_INJECT.md`.
+
 ## Tests
 
 - Unit: bounds, truncation, redaction, error shape

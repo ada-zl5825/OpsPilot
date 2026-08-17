@@ -4,7 +4,7 @@ from datetime import UTC, datetime, timedelta
 
 from pydantic import BaseModel
 
-WINDOW_SLACK_SECONDS = 30
+WINDOW_SLACK_SECONDS = 5
 MIN_WINDOW_SECONDS = 60
 
 
@@ -33,6 +33,6 @@ def window_from_onset(injected_at: str, *, now: datetime | None = None) -> Inves
     onset = parse_iso8601(injected_at)
     end = now or datetime.now(UTC)
     start = onset - timedelta(seconds=WINDOW_SLACK_SECONDS)
-    if (end - start).total_seconds() < MIN_WINDOW_SECONDS:
-        start = end - timedelta(seconds=MIN_WINDOW_SECONDS)
+    if end <= start or (end - start).total_seconds() < MIN_WINDOW_SECONDS:
+        end = start + timedelta(seconds=MIN_WINDOW_SECONDS)
     return InvestigationWindow(start=_iso(start), end=_iso(end))

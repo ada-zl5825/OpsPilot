@@ -104,7 +104,7 @@ S02/S04 该还是低：那是诊断质量，不是 matcher 误杀。抬真实根
 - 不改 Holmes pin，不 rebuild 模拟栈
 - 不在 Holdout 上调 Prompt / alias
 
-S02–S04 真塌缩的连跑残留（Loki/Prom 上场窗口）见 `docs/12_LIVE_CROSS_SCENARIO_RESIDUE.md`。
+S02–S04 真塌缩的连跑残留（Loki/Prom 上场窗口）见 `docs/12_LIVE_CROSS_SCENARIO_RESIDUE.md`。30s slack 仍吃尾部时见 `docs/13_LIVE_QUIET_BEFORE_INJECT.md`。
 
 ## 7. 如何复验
 

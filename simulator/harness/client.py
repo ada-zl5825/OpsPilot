@@ -2,9 +2,18 @@ from __future__ import annotations
 
 import os
 import time
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import httpx
+
+from simulator.harness.quiet import (
+    CHECKOUT_5XX_INCREASE,
+    QUIET_ERROR_LOOKBACK_SECONDS,
+    is_5xx_quiet,
+    loki_value_count,
+    prometheus_scalar,
+)
 
 
 def _json_object(response: httpx.Response) -> dict[str, Any]:
@@ -87,16 +96,46 @@ class LabClient:
             )
         except (httpx.HTTPError, ValueError, TypeError):
             return False
-        for series in payload.get("data", {}).get("result", []):
-            value = series.get("value", [None, "0"])
-            if len(value) < 2:
-                continue
+        return prometheus_scalar(payload) > 0
+
+    def prometheus_checkout_5xx_quiet(self) -> bool:
+        try:
+            payload = self.prometheus_query(CHECKOUT_5XX_INCREASE)
+        except (httpx.HTTPError, ValueError, TypeError):
+            return False
+        return is_5xx_quiet(payload)
+
+    def loki_has_recent_error_logs(
+        self, service: str = "checkout", lookback_seconds: int = QUIET_ERROR_LOOKBACK_SECONDS
+    ) -> bool:
+        end = datetime.now(UTC)
+        start = end - timedelta(seconds=lookback_seconds)
+        start_ns = str(int(start.timestamp() * 1_000_000_000))
+        end_ns = str(int(end.timestamp() * 1_000_000_000))
+        queries = (
+            f'{{service_name="{service}"}} |~ "(?i)error"',
+            f'{{service="{service}"}} |~ "(?i)error"',
+        )
+        for query in queries:
             try:
-                if float(value[1]) > 0:
+                response = self._http.get(
+                    f"{LOKI_URL}/loki/api/v1/query_range",
+                    params={"query": query, "start": start_ns, "end": end_ns, "limit": "5"},
+                    timeout=5.0,
+                )
+                if response.status_code != 200:
+                    continue
+                payload = response.json()
+                if not isinstance(payload, dict):
+                    continue
+                if loki_value_count(payload) > 0:
                     return True
-            except (TypeError, ValueError):
+            except (httpx.HTTPError, ValueError, TypeError):
                 continue
         return False
+
+    def prior_incident_quiet(self) -> bool:
+        return self.prometheus_checkout_5xx_quiet() and not self.loki_has_recent_error_logs()
 
     def loki_has_recent_service_logs(self, service: str = "checkout") -> bool:
         queries = (f'{{service_name="{service}"}}', f'{{service="{service}"}}')

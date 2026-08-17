@@ -38,6 +38,8 @@ inject → emit metrics/logs/traces → agent investigates
 reset  → clear fault → recovery checks pass without LLM
 ```
 
+Live sequential arm: `reset_all` → wait until checkout 5xx/error logs are quiet → inject. See `docs/13_LIVE_QUIET_BEFORE_INJECT.md`.
+
 ## Tests
 
 - Scenario integrity (`benchmarks/datasets/check_integrity.py`)

@@ -7,6 +7,7 @@ from uuid import uuid4
 
 import httpx
 from simulator.harness.client import LabClient
+from simulator.harness.quiet import QUIET_WAIT_TIMEOUT_SECONDS
 
 from benchmarks.datasets.variants import ScenarioVariant, load_variants, parent_scenario
 from benchmarks.report import build_report, write_report
@@ -72,6 +73,11 @@ def _one_per_family(variants: Sequence[ScenarioVariant]) -> list[ScenarioVariant
 
 def _arm_lab(lab: LabClient, scenario_id: str) -> InvestigationWindow:
     lab.reset_all()
+    if not lab.wait_until(lab.prior_incident_quiet, timeout_sec=QUIET_WAIT_TIMEOUT_SECONDS):
+        raise RuntimeError(
+            f"lab did not go quiet after reset before {scenario_id}; "
+            "prior 5xx or error logs would leak into the next investigation window"
+        )
     body = lab.inject(scenario_id)
     if not body.get("injected"):
         raise RuntimeError(f"lab inject failed for {scenario_id}")

@@ -16,5 +16,6 @@
 | [10_LIVE_EMPTY_EVIDENCE_FIX.md](10_LIVE_EMPTY_EVIDENCE_FIX.md) | Live 查空了：path 过滤、end 取整、rate 二次聚合与 Loki 查询修复 |
 | [11_DIAGNOSIS_SCORING.md](11_DIAGNOSIS_SCORING.md) | 诊断打分层：slug 假 0、结构化 rubric、2026 RCA 评测对照 |
 | [12_LIVE_CROSS_SCENARIO_RESIDUE.md](12_LIVE_CROSS_SCENARIO_RESIDUE.md) | Live 连跑残留：本场 onset 裁窗，S02–S04 不再吃上场 DB 日志 |
+| [13_LIVE_QUIET_BEFORE_INJECT.md](13_LIVE_QUIET_BEFORE_INJECT.md) | Live 连跑：reset 后先等 5xx/error 静默再 inject；裁窗余量 30s→5s |
 | [HANDOFF.md](HANDOFF.md) | 新窗口交接：Phase 0–6 已完成；不要开始 UI / Multi-Agent / SFT |
 | [UPSTREAM_BASELINE.md](UPSTREAM_BASELINE.md) | Phase 0 验收记录（已完成） |
