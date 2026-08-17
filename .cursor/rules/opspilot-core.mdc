@@ -1,0 +1,17 @@
+---
+description: OpsPilot hard constraints and phase gates for every change
+alwaysApply: true
+---
+
+# OpsPilot core
+
+- HolmesGPT is an external container dependency. Do not vendor its source.
+- Pin `robustadev/holmes:0.39.0`. Never use `:latest`.
+- LLM output cannot cross the deterministic boundary. Writes go Proposal → Policy → Approval → Executor.
+- Agent must never receive `execute_approved_proposal` or `rollback_execution`.
+- No arbitrary shell, no `shell=True`, no kube write credentials on the Agent container.
+- Ground truth, verification codes, and scenario answers stay out of prompts, tools, and runbooks.
+- Do not log API keys, tokens, kubeconfig, or unredacted logs.
+- Current work is Phase 0 (upstream baseline). Do not start simulator UI, Multi-Agent, or SFT yet.
+- Before coding in a domain, read the matching skill under `skills/`.
+- Spec: `OpsPilot_完整开发技术文档.md`.

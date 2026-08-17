@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+kubeconfig
+*.kubeconfig
+
+# Tool artifacts and traces
+artifacts/
+data/raw/
+*.sqlite3
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Benchmark live outputs (keep fixtures)
+benchmarks/reports/*.json
+benchmarks/reports/*.md
+!benchmarks/reports/.gitkeep
+
+# Holmes local config copies
+.holmes/

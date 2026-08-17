@@ -1,0 +1,37 @@
+# 架构
+
+OpsPilot 是 HolmesGPT 之上的事故实验与控制面，不重写 Agent Loop。
+
+```text
+OpsPilot API / Benchmark Runner
+             │
+   ├── HolmesGPT API / CLI container   (robustadev/holmes:0.39.0)
+   ├── Observability MCP
+   ├── Deployment MCP
+   ├── Runbook MCP
+   ├── Remediation MCP
+   └── PostgreSQL / OTel stack
+```
+
+## 信任边界
+
+- Untrusted：用户输入、日志、Runbook、GitHub 文本、Tool 自然语言
+- Semi-trusted：Holmes 输出、根因假设、修复建议
+- Trusted deterministic：Pydantic、Policy、Approval、Idempotency、Executor allowlist、Recovery checker、Audit log
+
+LLM 文本不能直接跨越 deterministic boundary 执行写操作。
+
+## 调查状态机
+
+`IncidentCreated → Investigating → RootCauseProposed → VerificationReview → RemediationProposed → AwaitingApproval → Executing → RecoveryVerification → Resolved | RolledBack | HumanEscalation`
+
+## OTel 布局（Phase 3）
+
+```text
+incident.run
+  ├── holmes.investigation
+  ├── remediation.policy
+  ├── remediation.approval
+  ├── remediation.execute
+  └── recovery.verify
+```

@@ -1,0 +1,36 @@
+# Phase 0 baseline: PostgreSQL + pinned HolmesGPT.
+# Observability stack and simulator services arrive in Phase 1.
+# Never use floating :latest tags.
+
+services:
+  postgres:
+    image: postgres:16.6
+    environment:
+      POSTGRES_USER: opspilot
+      POSTGRES_PASSWORD: opspilot
+      POSTGRES_DB: opspilot
+    ports:
+      - "5432:5432"
+    volumes:
+      - opspilot_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U opspilot -d opspilot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  holmes:
+    image: robustadev/holmes:0.39.0
+    profiles: ["holmes"]
+    environment:
+      AZURE_API_BASE: ${AZURE_OPENAI_ENDPOINT:-}
+      AZURE_API_KEY: ${AZURE_OPENAI_API_KEY:-}
+      AZURE_API_VERSION: ${AZURE_OPENAI_API_VERSION:-2024-10-21}
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config/holmes:/etc/holmes:ro
+    command: ["python", "server.py"]
+
+volumes:
+  opspilot_pg:

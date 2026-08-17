@@ -1,0 +1,14 @@
+---
+description: Proposal, policy, approval, and executor safety rules
+globs: src/opspilot/policy/**/*.py,src/opspilot/executor/**/*.py,src/opspilot/api/routes_approvals.py
+alwaysApply: false
+---
+
+# Remediation safety
+
+- Compile typed actions only. Reject raw command strings.
+- Bind approval to an immutable proposal digest. Any param change voids the approval.
+- Expired or already-executed proposals cannot run again.
+- Approver cannot be the system Agent. Reject cannot be auto-overridden.
+- Executor allowlist: rollback, restart, scale. Namespace/service must be allowlisted.
+- Load `skills/remediation-safety/SKILL.md` before changing this path.

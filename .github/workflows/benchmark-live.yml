@@ -1,0 +1,15 @@
+name: benchmark-live
+
+on:
+  workflow_dispatch:
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Guard
+        run: |
+          echo "Live Azure benchmark is manual-only. Do not run on ordinary PRs."
+          echo "Implement in Phase 5."
+          exit 0

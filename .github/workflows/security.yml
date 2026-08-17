@@ -1,0 +1,19 @@
+name: security
+
+on:
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1"
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: uv sync --extra dev
+      - name: Security tests
+        run: uv run pytest tests/security -q

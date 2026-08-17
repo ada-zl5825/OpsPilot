@@ -1,0 +1,7 @@
+# HolmesGPT is an external upstream dependency.
+# Upgrade only after compatibility tests pass. Never pin :latest.
+
+HOLMESGPT_REPO=https://github.com/HolmesGPT/holmesgpt
+HOLMESGPT_TAG=0.39.0
+HOLMESGPT_IMAGE=robustadev/holmes:0.39.0
+HOLMESGPT_RELEASE_DATE=2026-08-10

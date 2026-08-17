@@ -1,0 +1,16 @@
+---
+description: MCP tool schema, safety, and contract-test rules
+globs: mcp_servers/**/*.py
+alwaysApply: false
+---
+
+# MCP tools
+
+- One responsibility per tool. Strict Pydantic / JSON Schema.
+- Enumerate parameters; cap time range, limit, timeout, and response size.
+- Return structured errors: called tool, safe params, time range, error type, retryable, suggested fix.
+- Classify every tool as Read, Propose, or Mutate. Agent gets Read and Propose only.
+- Filter and redact on the server. Spill large payloads to artifacts.
+- Do not expose PromQL/LogQL/Shell as the default interface.
+- Add a contract test for schema, Azure compatibility, bounds, and timeout.
+- Load `skills/mcp-toolset/SKILL.md` before adding or changing a tool.
