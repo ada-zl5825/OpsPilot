@@ -5,7 +5,7 @@
 仓库：https://github.com/ada-zl5825/OpsPilot  
 Holmes 上游 fork：https://github.com/ada-zl5825/holmesgpt
 
-**新窗口第一件事：读本文件 + `AGENTS.md` + `skills/agent-eval/SKILL.md`。Phase 0–5 已完成。下一步是 Phase 6 Verifier。不要重做 Phase 0–5，不要开始 UI / Multi-Agent / SFT。**
+**新窗口第一件事：读本文件 + `AGENTS.md` + `skills/agent-eval/SKILL.md`。Phase 0–6 已完成。不要重做 Phase 0–6，不要开始 UI / Multi-Agent 编排 / SFT。**
 
 ## 当前状态
 
@@ -21,6 +21,8 @@ Holmes 上游 fork：https://github.com/ada-zl5825/holmesgpt
 
 **Phase 5 已完成**（Benchmark v1）。实现：`src/opspilot/eval/`、`benchmarks/`。报告：`docs/08_EXPERIMENT_REPORT.md`。
 
+**Phase 6 已完成**（Verifier 实验）。实现：`src/opspilot/verifier/`、`experiments/single_vs_verifier/`。结论：不晋升，Simple Agent 仍是默认。
+
 | 门禁 | 结果 |
 |---|---|
 | `python -m benchmarks.datasets.check_integrity` | `dataset integrity ok (4 scenarios, 20 variants, 4 holdout)` |
@@ -34,7 +36,9 @@ Holmes 上游 fork：https://github.com/ada-zl5825/holmesgpt
 | Phase 4 unit + contract + security | 未批准/篡改/过期/跨 ns/digest 不匹配均不能写；Agent 看不到 execute/rollback；typed command only |
 | Phase 5 offline + gate | 20 变体（16 eval / 4 holdout）；Deterministic 综合分 1.0；Single-Agent 0.8372；unsafe/未审批写综合分 0 |
 
-**下一步是 Phase 6：Verifier 实验。不要做 UI / Multi-Agent / SFT，不要给 Agent 写工具。**
+Live Azure 调查曾因可选参数 `null` 被 FastMCP 拒绝、以及按工具名计重复预算而失败。修复记录：`docs/09_LIVE_AZURE_INVESTIGATION_FIX.md`。随后根因仍为 0，是因为空序列被当成健康信号。修复记录：`docs/10_LIVE_EMPTY_EVIDENCE_FIX.md`。Verifier 不得把 Investigator 查到的措辞（例如 “connection pool”）当成 prompt 泄题。不要据此重做 Phase 0–6 或开始 Multi-Agent。
+
+**下一步不要做 UI / Multi-Agent 编排 / SFT。Phase 7 仅在轨迹数据集与 Benchmark 继续冻结且明确要求时才开始。**
 
 ## 新窗口开场 Prompt（可直接粘贴）
 
@@ -43,10 +47,10 @@ Holmes 上游 fork：https://github.com/ada-zl5825/holmesgpt
 Phase 0–5 已完成。不要重做 Holmes 基线、模拟器、Phase 2 MCP、Single-Agent 调查、
 安全修复控制面或 Benchmark v1。
 
-实现 Phase 6 Verifier 实验：Investigator 输出 Schema、Verifier Prompt、一次补查、
-固定总预算、Single vs Verifier A/B。用数据证明或否定收益。
+Phase 0–6 已完成。不要重做 Holmes 基线、模拟器、Phase 2 MCP、Single-Agent 调查、
+安全修复控制面、Benchmark v1 或 Verifier 实验。
 
-不实现 UI、Multi-Agent 编排或 SFT。
+不要开始 UI、Multi-Agent 编排或 SFT。
 ```
 
 ## 硬约束（违反即做错）
@@ -58,7 +62,7 @@ Phase 0–5 已完成。不要重做 Holmes 基线、模拟器、Phase 2 MCP、S
 5. Ground truth / verification code 不能进 Agent prompt、tool result、runbook。
 6. 不要记日志里的 token、密钥、kubeconfig、完整敏感日志。
 7. 不要提交 `.env`。
-8. 不要开始 Multi-Agent / SFT。Phase 1 也不要接 LLM。
+8. 不要开始 Multi-Agent 编排 / SFT。Phase 6 的两角色实验不是编排器。Phase 1 也不要接 LLM。
 9. 不要改 git config。上游 PR 才需要 DCO `Signed-off-by`（只在 holmesgpt fork 上）。
 
 ## 本机环境
@@ -99,6 +103,7 @@ $env:Path = "$machine;$user"
 8. `approval_required_tools: [lab_mutate_probe]` 已验证有效。OpsPilot client **禁止** `auto_approve` 和 `approved=true`。
 9. Builtin `internet` 已开；k8s / docker / bash 已关，否则容器会因缺 kubeconfig 出问题。
 10. 改完 Holmes config 后要 `docker compose --profile holmes up -d --force-recreate holmes`，只 restart 可能还用旧配置。
+11. **Azure / gpt-4o 会对未使用的可选工具参数发 JSON `null`。** Schema 不能写成 `str | None`（Azure 拒 `anyOf`），必须在运行时丢掉 null。见 `docs/09_LIVE_AZURE_INVESTIGATION_FIX.md`。改完 MCP 后要 `--build` 重建 `opspilot-observability` 等容器。
 
 ## 常用命令
 
@@ -135,7 +140,14 @@ python -m uv run python -m benchmarks.cli --offline --gate
 python -m uv run pytest tests/benchmark -q
 ```
 
-Makefile 等价：`make test`、`make holmes-up`、`make holmes-smoke`、`make lab-up`、`make lab-verify`、`make investigate-prompt`、`make benchmark-offline`。Windows 上若没 make，直接跑上面的 python/docker 命令。
+Phase 6（不接 LLM）：
+
+```powershell
+python -m uv run python -m opspilot.cli verify --all --prompt-only
+python -m uv run python -m experiments.single_vs_verifier --offline
+```
+
+Makefile 等价：`make test`、`make holmes-up`、`make holmes-smoke`、`make lab-up`、`make lab-verify`、`make investigate-prompt`、`make benchmark-offline`、`make verifier-prompt`、`make verifier-ab`。Windows 上若没 make，直接跑上面的 python/docker 命令。
 
 Phase 3（不接 LLM 也可验 prompt / 回放门禁）：
 
@@ -175,6 +187,8 @@ python -m uv run pytest tests/integration -q
 | `src/opspilot/investigation/` | Phase 3 Single-Agent：prompt、budget、evidence、diagnosis、event store、replay、runner |
 | `src/opspilot/eval/` | Phase 5 scorer：原始指标、综合分、hard fail、offline replay 打分 |
 | `benchmarks/` | Phase 5 harness、20 变体、Deterministic / Single-Agent baseline、regression gate |
+| `src/opspilot/verifier/` | Phase 6：InvestigatorBundle、VerifierVerdict、一次补查、共用预算 |
+| `experiments/single_vs_verifier/` | Phase 6 Single vs Verifier A/B 与失败分析 |
 | `src/opspilot/remediation/` | Phase 4 控制面：propose / policy / dry-run / approve / execute / rollback / verify |
 | `src/opspilot/executor/` | typed command、digest、lab/k8s/docker executor（不跑 shell） |
 | `src/opspilot/storage/` | IncidentRun / Evidence / Hypothesis / AgentEvent / Proposal / Approval / Execution 表定义 |
@@ -270,6 +284,23 @@ python -m uv run python -m benchmarks.cli --offline --gate
 python -m uv run pytest tests/unit tests/contract tests/security tests/benchmark -q
 ```
 
+## Phase 6 已验收
+
+- Investigator 交接是 `InvestigatorBundle`（Pydantic），不是两段 Agent 自由对话。
+- Verifier Prompt / `VerifierVerdict`：accept、request_followup、reject。
+- 最多一次补查；Investigator 与 Verifier 共用总 Tool Budget。
+- Verifier 默认只读；写工具建议会被 policy 剥掉或拒绝。
+- 离线 A/B：同一 16 个 eval 变体上 Single-Agent 与 Verifier 根因都是 1.0；Verifier 增加 token / 成本 / 延迟。
+- 构造的 Investigator 失败集上，Verifier 能减少已接受的错误根因和缺证据。
+- 晋升条件未满足：**不晋升** Investigator+Verifier。Simple Agent 仍是默认。
+- 无 UI、无 Multi-Agent 编排、无 SFT。Holdout 未用于调 Prompt。
+
+```powershell
+python -m uv run python -m opspilot.cli verify --all --prompt-only
+python -m uv run python -m experiments.single_vs_verifier --offline
+python -m uv run pytest tests/unit tests/contract tests/security tests/benchmark -q
+```
+
 ## 不要做
 
 - 不要重跑/重写 Phase 0 Holmes client，除非 compose 被你改坏了。
@@ -278,6 +309,7 @@ python -m uv run pytest tests/unit tests/contract tests/security tests/benchmark
 - 不要重做 Phase 3 调查运行时，除非轨迹/诊断门禁被你改坏了。
 - 不要重做 Phase 4 控制面，除非安全门禁被你改坏了。
 - 不要重做 Phase 5 Benchmark，除非 scorer / 变体完整性 / regression gate 被你改坏了。
+- 不要重做 Phase 6 Verifier，除非 schema / 共用预算 / A/B 报告被你改坏了。不要把两角色实验扩成 Multi-Agent 编排。
 - 不要在 Holdout 上调 Prompt 后宣称泛化。
 - 不要把 `execute_approved_proposal` 或 `rollback_execution` 注册到 Holmes。
 - 不要把写操作 MCP 和只读工具混在一次大 PR 里。
@@ -324,6 +356,17 @@ pytest tests/unit tests/contract tests/security: 146+ passed
 Agent catalog / FastMCP: execute_approved_proposal 与 rollback_execution 均不可见
 未批准 / 篡改 / 过期 / 跨 namespace / digest 不匹配 / Shell 与 flag 注入：write_count == 0
 并发 execute：同一 execution_id，write_count == 1
+```
+
+## Phase 6 复验记录（2026-08-17，本机）
+
+```text
+pytest tests/unit tests/contract tests/security tests/benchmark: 190 passed
+python -m benchmarks.cli --offline --gate: PASS (deterministic 1.000, single_agent 0.8372)
+python -m experiments.single_vs_verifier --offline: DO_NOT_PROMOTE
+  eval root_cause lift=0.000  L3 lift=0.000  cost_ratio=1.600  latency_ratio=1.190
+  constructed failures reduced: wrong_root_cause, missing_evidence
+  Simple Agent remains the default
 ```
 
 ## Phase 5 复验记录（2026-08-17，本机）

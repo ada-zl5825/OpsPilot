@@ -12,5 +12,7 @@
 | [06_OPERATIONS.md](06_OPERATIONS.md) | 本地启动与阶段命令 |
 | [07_UPSTREAM_CONTRIBUTION.md](07_UPSTREAM_CONTRIBUTION.md) | HolmesGPT 上游 PR 路线 |
 | [08_EXPERIMENT_REPORT.md](08_EXPERIMENT_REPORT.md) | Benchmark v1 离线实验报告 |
-| [HANDOFF.md](HANDOFF.md) | 新窗口交接：Phase 0–5 已完成，下一步是 Phase 6 Verifier |
+| [09_LIVE_AZURE_INVESTIGATION_FIX.md](09_LIVE_AZURE_INVESTIGATION_FIX.md) | Live Azure 调查失败：null 可选参数与预算重复计数修复 |
+| [10_LIVE_EMPTY_EVIDENCE_FIX.md](10_LIVE_EMPTY_EVIDENCE_FIX.md) | Live 查空了：path 过滤、end 取整、rate 二次聚合与 Loki 查询修复 |
+| [HANDOFF.md](HANDOFF.md) | 新窗口交接：Phase 0–6 已完成；不要开始 UI / Multi-Agent / SFT |
 | [UPSTREAM_BASELINE.md](UPSTREAM_BASELINE.md) | Phase 0 验收记录（已完成） |

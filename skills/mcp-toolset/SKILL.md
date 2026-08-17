@@ -37,6 +37,10 @@ Do not ship free-form PromQL/LogQL/Shell as the default interface.
 
 Run `validate_tool_schema_for_azure` on every tool schema. Isolate a single bad tool; do not drop the whole catalog.
 
+Do not advertise `anyOf` / `null` on optional strings. Azure rejects that schema, but gpt-4o still sends JSON `null` for unused optionals. Coerce at runtime with `drop_null_arguments` / `create_mcp()`; add a contract test that calls the tool with `path=null` (or equivalent) and still passes the Azure schema suite. See `docs/09_LIVE_AZURE_INVESTIGATION_FIX.md`.
+
+If an optional path filter matches no series, retry without path and set `path_ignored`. Empty successful results must include `empty` and `suggested_fix`. Do not treat `(last-first)/duration` as aggregation for metrics that are already `rate()` / ratios. See `docs/10_LIVE_EMPTY_EVIDENCE_FIX.md`.
+
 ## Tests
 
 - Unit: bounds, truncation, redaction, error shape

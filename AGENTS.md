@@ -19,7 +19,7 @@ HolmesGPT is the Agent runtime. This repository owns the incident lab, MCP tools
 
 ## Current phase
 
-Phase 0–5 are complete (`docs/UPSTREAM_BASELINE.md`, `docs/HANDOFF.md`, `docs/08_EXPERIMENT_REPORT.md`). Next is Phase 6 Verifier. Do not start UI, Multi-Agent, or SFT.
+Phase 0–6 are complete (`docs/UPSTREAM_BASELINE.md`, `docs/HANDOFF.md`, `docs/08_EXPERIMENT_REPORT.md`). Live Azure investigation failures and the null-arg / budget fix: `docs/09_LIVE_AZURE_INVESTIGATION_FIX.md`. Empty-evidence follow-up: `docs/10_LIVE_EMPTY_EVIDENCE_FIX.md`. Do not start UI, Multi-Agent orchestration, or SFT.
 
 ## Skills
 
