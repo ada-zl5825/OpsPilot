@@ -1,4 +1,4 @@
-.PHONY: install lint format typecheck test test-unit test-contract test-security up down smoke holmes-up holmes-down holmes-smoke lab-up lab-down lab-verify investigate-prompt
+.PHONY: install lint format typecheck test test-unit test-contract test-security test-benchmark up down smoke holmes-up holmes-down holmes-smoke lab-up lab-down lab-verify investigate-prompt benchmark-offline
 
 UV ?= python -m uv
 
@@ -15,7 +15,7 @@ format:
 typecheck:
 	$(UV) run mypy src
 
-test: test-unit test-contract test-security
+test: test-unit test-contract test-security test-benchmark
 
 test-unit:
 	$(UV) run pytest tests/unit -q
@@ -25,6 +25,13 @@ test-contract:
 
 test-security:
 	$(UV) run pytest tests/security -q
+
+test-benchmark:
+	$(UV) run pytest tests/benchmark -q
+
+benchmark-offline:
+	$(UV) run python -m benchmarks.datasets.check_integrity
+	$(UV) run python -m benchmarks.cli --offline --gate
 
 up:
 	docker compose up -d postgres
@@ -57,4 +64,4 @@ investigate-prompt:
 smoke:
 	$(UV) run ruff check .
 	$(UV) run mypy src
-	$(UV) run pytest tests/unit tests/contract tests/security -q
+	$(UV) run pytest tests/unit tests/contract tests/security tests/benchmark -q

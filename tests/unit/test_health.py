@@ -9,7 +9,7 @@ def test_health() -> None:
     assert response.status_code == 200
     body = response.json()
     assert body["status"] == "ok"
-    assert body["phase"] == "4"
+    assert body["phase"] == "5"
 
 
 def test_execute_unknown_proposal_is_not_a_write() -> None:

@@ -106,15 +106,30 @@ def check_integrity(dataset_dir: Path = DATASET_DIR) -> list[str]:
     return errors
 
 
-def main() -> int:
+def check_all() -> list[str]:
+    from benchmarks.datasets.variants import check_variant_integrity
+
     errors = check_integrity()
+    errors.extend(check_variant_integrity())
+    return errors
+
+
+def main() -> int:
+    from benchmarks.datasets.variants import load_variants
+
+    errors = check_all()
     files = list(DATASET_DIR.glob("S*.json"))
+    variants = load_variants()
     if errors:
         print("dataset integrity failed:")
         for error in errors:
             print(f"  - {error}")
         return 1
-    print(f"dataset integrity ok ({len(files)} scenarios)")
+    holdout = sum(1 for item in variants if item.split == "holdout")
+    print(
+        f"dataset integrity ok ({len(files)} scenarios, "
+        f"{len(variants)} variants, {holdout} holdout)"
+    )
     return 0
 
 

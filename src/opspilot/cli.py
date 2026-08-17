@@ -33,6 +33,25 @@ def main(argv: list[str] | None = None) -> int:
     replay.add_argument("--run-id", required=True)
     replay.add_argument("--artifact-dir", default="artifacts/investigations")
 
+    benchmark = sub.add_parser("benchmark", help="Run Phase 5 offline benchmark")
+    benchmark.add_argument("--offline", action="store_true")
+    benchmark.add_argument("--live", action="store_true")
+    benchmark.add_argument("--replay", action="store_true")
+    benchmark.add_argument("--dry-run", action="store_true")
+    benchmark.add_argument("--gate", action="store_true")
+    benchmark.add_argument("--split", choices=("eval", "holdout"), default="eval")
+    benchmark.add_argument(
+        "--condition",
+        dest="conditions",
+        action="append",
+        choices=("deterministic", "single_agent"),
+        default=[],
+    )
+    benchmark.add_argument("--scenario", dest="scenarios", action="append", default=[])
+    benchmark.add_argument("--run-id")
+    benchmark.add_argument("--artifact-dir", default="artifacts/investigations")
+    benchmark.add_argument("--out", default="artifacts/benchmarks")
+
     args = parser.parse_args(argv)
 
     if args.command == "health":
@@ -40,7 +59,7 @@ def main(argv: list[str] | None = None) -> int:
             json.dumps(
                 {
                     "status": "ok",
-                    "phase": "4",
+                    "phase": "5",
                     "prompt_version": PROMPT_VERSION,
                     "tool_catalog_version": TOOL_CATALOG_VERSION,
                 }
@@ -59,6 +78,29 @@ def main(argv: list[str] | None = None) -> int:
         return _investigate(args)
     if args.command == "replay":
         return _replay(args)
+    if args.command == "benchmark":
+        from benchmarks.cli import main as benchmark_main
+
+        forwarded: list[str] = []
+        if args.offline:
+            forwarded.append("--offline")
+        if args.live:
+            forwarded.append("--live")
+        if args.replay:
+            forwarded.append("--replay")
+        if args.dry_run:
+            forwarded.append("--dry-run")
+        if args.gate:
+            forwarded.append("--gate")
+        forwarded.extend(["--split", args.split])
+        for condition in args.conditions:
+            forwarded.extend(["--condition", condition])
+        for scenario_id in args.scenarios:
+            forwarded.extend(["--scenario", scenario_id])
+        if args.run_id:
+            forwarded.extend(["--run-id", args.run_id])
+        forwarded.extend(["--artifact-dir", args.artifact_dir, "--out", args.out])
+        return benchmark_main(forwarded)
 
     parser.print_help()
     return 0

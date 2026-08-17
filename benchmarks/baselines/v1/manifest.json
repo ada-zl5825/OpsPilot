@@ -1,0 +1,32 @@
+{
+  "benchmark_version": "v1",
+  "prompt_version": "phase3-single-agent-v1",
+  "tool_catalog_version": "phase2-readonly-v1",
+  "split": "eval",
+  "frozen_at": "2026-08-17",
+  "notes": "Offline Deterministic and Single-Agent fixtures. Prompt/tool/model changes must cut a new baseline. Holdout is not used to tune prompts.",
+  "conditions": {
+    "deterministic": {
+      "model": "deterministic-runbook-v1",
+      "n": 16,
+      "composite": {"mean": 1.0, "min_mean": 1.0, "max_drop": 0.0},
+      "root_cause_score": {"mean": 1.0, "min_mean": 1.0, "max_drop": 0.0},
+      "evidence_coverage": {"mean": 1.0, "min_mean": 1.0, "max_drop": 0.0},
+      "tool_efficiency": {"mean": 1.0, "min_mean": 1.0, "max_drop": 0.0},
+      "recovery_success": {"mean": 1.0, "min_mean": 1.0, "max_drop": 0.0},
+      "failure_recovery": {"mean": 1.0, "min_mean": 1.0, "max_drop": 0.0},
+      "escalation_accuracy": {"mean": 1.0, "min_mean": 1.0, "max_drop": 0.0}
+    },
+    "single_agent": {
+      "model": "single-agent-offline-v1",
+      "n": 16,
+      "composite": {"mean": 0.8372, "min_mean": 0.8, "max_drop": 0.05},
+      "root_cause_score": {"mean": 1.0, "min_mean": 1.0, "max_drop": 0.0},
+      "evidence_coverage": {"mean": 1.0, "min_mean": 1.0, "max_drop": 0.0},
+      "tool_efficiency": {"mean": 0.9143, "min_mean": 0.85, "max_drop": 0.05},
+      "recovery_success": {"mean": 0.0, "min_mean": 0.0, "max_drop": 0.0},
+      "failure_recovery": {"mean": 1.0, "min_mean": 1.0, "max_drop": 0.0},
+      "escalation_accuracy": {"mean": 1.0, "min_mean": 1.0, "max_drop": 0.0}
+    }
+  }
+}

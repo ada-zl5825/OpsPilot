@@ -1,1 +1,1 @@
-"""Benchmark harness. Implemented in Phase 5."""
+"""Phase 5 trajectory benchmark harness."""

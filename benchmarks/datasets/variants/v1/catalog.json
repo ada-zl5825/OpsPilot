@@ -1,0 +1,148 @@
+{
+  "version": "v1",
+  "frozen_at": "2026-08-17",
+  "parent_scenarios": ["S01", "S02", "S03", "S04"],
+  "notes": "Prompt variants of the Phase 1 lab families. Holdout is V05 per family and is not used to tune prompts.",
+  "variants": [
+    {
+      "variant_id": "S01-V01",
+      "scenario_id": "S01",
+      "split": "eval",
+      "seed": 1,
+      "user_report": "Users report they cannot complete checkout. The storefront error rate increased in the last 15 minutes."
+    },
+    {
+      "variant_id": "S01-V02",
+      "scenario_id": "S01",
+      "split": "eval",
+      "seed": 2,
+      "user_report": "Support is seeing failed order submissions on the storefront this afternoon."
+    },
+    {
+      "variant_id": "S01-V03",
+      "scenario_id": "S01",
+      "split": "eval",
+      "seed": 3,
+      "user_report": "Customers say the buy button fails and they never get an order confirmation."
+    },
+    {
+      "variant_id": "S01-V04",
+      "scenario_id": "S01",
+      "split": "eval",
+      "seed": 4,
+      "user_report": "On-call got paged for a sudden rise in storefront 5xx during checkout."
+    },
+    {
+      "variant_id": "S01-V05",
+      "scenario_id": "S01",
+      "split": "holdout",
+      "seed": 5,
+      "user_report": "A merchant Slack thread says purchases stop at the last step of the storefront."
+    },
+    {
+      "variant_id": "S02-V01",
+      "scenario_id": "S02",
+      "split": "eval",
+      "seed": 1,
+      "user_report": "The storefront feels slow. Checkout wait times increased over the last twenty minutes."
+    },
+    {
+      "variant_id": "S02-V02",
+      "scenario_id": "S02",
+      "split": "eval",
+      "seed": 2,
+      "user_report": "Returning shoppers say the storefront hangs before the order is placed."
+    },
+    {
+      "variant_id": "S02-V03",
+      "scenario_id": "S02",
+      "split": "eval",
+      "seed": 3,
+      "user_report": "Checkout pages take much longer than this morning for repeat visits."
+    },
+    {
+      "variant_id": "S02-V04",
+      "scenario_id": "S02",
+      "split": "eval",
+      "seed": 4,
+      "user_report": "Latency alerts fired on the storefront while the error rate stayed mostly flat."
+    },
+    {
+      "variant_id": "S02-V05",
+      "scenario_id": "S02",
+      "split": "holdout",
+      "seed": 5,
+      "user_report": "Customers complain the store feels sluggish only after they have shopped before."
+    },
+    {
+      "variant_id": "S03-V01",
+      "scenario_id": "S03",
+      "split": "eval",
+      "seed": 1,
+      "user_report": "Checkout errors jumped right after the 10:14 release window. New orders fail on the storefront."
+    },
+    {
+      "variant_id": "S03-V02",
+      "scenario_id": "S03",
+      "split": "eval",
+      "seed": 2,
+      "user_report": "Orders started failing in the same window as the late-morning storefront change."
+    },
+    {
+      "variant_id": "S03-V03",
+      "scenario_id": "S03",
+      "split": "eval",
+      "seed": 3,
+      "user_report": "The 10:14 change window lines up with a jump in checkout 5xx."
+    },
+    {
+      "variant_id": "S03-V04",
+      "scenario_id": "S03",
+      "split": "eval",
+      "seed": 4,
+      "user_report": "New checkouts fail immediately; traffic from earlier this morning was fine."
+    },
+    {
+      "variant_id": "S03-V05",
+      "scenario_id": "S03",
+      "split": "holdout",
+      "seed": 5,
+      "user_report": "A release-window page coincided with customers being unable to place new orders."
+    },
+    {
+      "variant_id": "S04-V01",
+      "scenario_id": "S04",
+      "split": "eval",
+      "seed": 1,
+      "user_report": "Paying customers are seeing failures at the edge API and during checkout."
+    },
+    {
+      "variant_id": "S04-V02",
+      "scenario_id": "S04",
+      "split": "eval",
+      "seed": 2,
+      "user_report": "People paying for orders see errors at the edge and never receive a receipt."
+    },
+    {
+      "variant_id": "S04-V03",
+      "scenario_id": "S04",
+      "split": "eval",
+      "seed": 3,
+      "user_report": "Checkout and the edge API fail together when a customer tries to pay."
+    },
+    {
+      "variant_id": "S04-V04",
+      "scenario_id": "S04",
+      "split": "eval",
+      "seed": 4,
+      "user_report": "Receipts are missing and paying customers get an error before the order lands."
+    },
+    {
+      "variant_id": "S04-V05",
+      "scenario_id": "S04",
+      "split": "holdout",
+      "seed": 5,
+      "user_report": "Card-paying shoppers report the storefront dies right before confirmation."
+    }
+  ]
+}

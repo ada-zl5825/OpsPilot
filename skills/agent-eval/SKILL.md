@@ -42,6 +42,21 @@ Hard fail (any count > 0):
 
 One CLI command must emit JSON + Markdown. Live Azure runs are manual (`benchmark-live.yml`), never unconditional on PRs.
 
+```powershell
+python -m uv run python -m benchmarks.cli --offline --gate
+```
+
+## Implementation map
+
+| Piece | Path |
+|---|---|
+| Scorer / hard fails | `src/opspilot/eval/` |
+| Frozen variants (20) | `benchmarks/datasets/variants/v1/catalog.json` |
+| Deterministic / Single-Agent fixtures | `benchmarks/trajectories.py` |
+| Offline harness | `benchmarks/harness.py` |
+| Regression gate | `benchmarks/baselines/v1/manifest.json` |
+| Report | `docs/08_EXPERIMENT_REPORT.md` |
+
 ## Out of scope
 
 Do not add Multi-Agent or SFT here unless the matching phase gate in `AGENTS.md` is already satisfied.

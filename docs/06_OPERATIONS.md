@@ -86,6 +86,18 @@ POST /api/proposals/{id}/verify
 
 Holmes 只加载 propose / dry-run / verify。`execute_approved_proposal` 与 `rollback_execution` 不注册到 Remediation MCP。
 
+## Phase 5 Benchmark v1
+
+不接 LLM 的离线评测与回归门禁：
+
+```powershell
+python -m uv run python -m benchmarks.datasets.check_integrity
+python -m uv run python -m benchmarks.cli --offline --gate
+python -m uv run pytest tests/benchmark -q
+```
+
+Holdout：`--split holdout`（不用于调 Prompt）。Live Azure 仅手动：`python -m benchmarks.cli --live` 或 `.github/workflows/benchmark-live.yml`。
+
 Live `/api/chat` 需要 `.env` 中的 Azure 凭证。没有凭证时，容器健康检查仍应通过。Phase 0 已在有凭证的本机验收通过；复验步骤见 `docs/HANDOFF.md`。
 
 ```bash
@@ -102,6 +114,7 @@ make holmes-down
 | 2 | MCP 工具 | 已完成（Observability / Deployment / Runbook，只读） |
 | 3 | Single-Agent 调查 | 已完成（单元/契约测试覆盖 S01–S04；live Azure 手动） |
 | 4 | 安全修复控制面 | 已完成（Proposal → Policy → Dry Run → Approval → Executor） |
-| 5+ | Benchmark / Verifier / SFT | 门禁见 `AGENTS.md` |
+| 5 | Benchmark v1 | 已完成（离线 Deterministic / Single-Agent、scorer、regression gate） |
+| 6+ | Verifier / SFT | 门禁见 `AGENTS.md`；不要开始 UI / Multi-Agent / SFT |
 
 升级 Holmes 版本必须先跑兼容性测试，再改 `config/holmesgpt.pin`。

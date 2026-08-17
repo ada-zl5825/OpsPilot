@@ -15,5 +15,9 @@ jobs:
           python-version: "3.12"
       - name: Install
         run: uv sync --extra dev
-      - name: Offline benchmark placeholder
+      - name: Dataset integrity
+        run: uv run python -m benchmarks.datasets.check_integrity
+      - name: Offline benchmark tests
         run: uv run pytest tests/benchmark -q
+      - name: Frozen baseline gate
+        run: uv run python -m benchmarks.cli --offline --gate

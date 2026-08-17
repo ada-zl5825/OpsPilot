@@ -18,14 +18,20 @@ class AgentVisibleIncident(BaseModel):
     user_report: str = ""
 
 
-def to_agent_visible(scenario: IncidentScenario) -> AgentVisibleIncident:
-    user_report = scenario.prompt_variants[0] if scenario.prompt_variants else ""
+def to_agent_visible(
+    scenario: IncidentScenario,
+    user_report: str | None = None,
+) -> AgentVisibleIncident:
+    report = user_report
+    if report is None:
+        report = scenario.prompt_variants[0] if scenario.prompt_variants else ""
+    assert_agent_text_is_safe(report)
     return AgentVisibleIncident(
         scenario_id=scenario.scenario_id,
         title=scenario.title,
         difficulty=scenario.difficulty,
         initial_symptoms=list(scenario.initial_symptoms),
-        user_report=user_report,
+        user_report=report,
     )
 
 

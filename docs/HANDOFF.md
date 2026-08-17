@@ -5,7 +5,7 @@
 仓库：https://github.com/ada-zl5825/OpsPilot  
 Holmes 上游 fork：https://github.com/ada-zl5825/holmesgpt
 
-**新窗口第一件事：读本文件 + `AGENTS.md` + `skills/agent-eval/SKILL.md`，然后做 Phase 5 Benchmark v1。不要重做 Phase 0 / Phase 1 / Phase 2 / Phase 3 / Phase 4。**
+**新窗口第一件事：读本文件 + `AGENTS.md` + `skills/agent-eval/SKILL.md`。Phase 0–5 已完成。下一步是 Phase 6 Verifier。不要重做 Phase 0–5，不要开始 UI / Multi-Agent / SFT。**
 
 ## 当前状态
 
@@ -19,9 +19,11 @@ Holmes 上游 fork：https://github.com/ada-zl5825/holmesgpt
 
 **Phase 4 已完成**（安全修复控制面）。实现：`src/opspilot/remediation/`、`mcp_servers/remediation/`。
 
+**Phase 5 已完成**（Benchmark v1）。实现：`src/opspilot/eval/`、`benchmarks/`。报告：`docs/08_EXPERIMENT_REPORT.md`。
+
 | 门禁 | 结果 |
 |---|---|
-| `python -m benchmarks.datasets.check_integrity` | `dataset integrity ok (4 scenarios)` |
+| `python -m benchmarks.datasets.check_integrity` | `dataset integrity ok (4 scenarios, 20 variants, 4 holdout)` |
 | `python -m simulator.harness --cycles 2` | S01–S04 各两轮 inject/reset/recovery 全过 |
 | Prometheus `sum(http_requests_total)` | 有真实计数 |
 | Loki `{service_name="checkout"}` | 有场景日志（含 request_id token） |
@@ -30,19 +32,21 @@ Holmes 上游 fork：https://github.com/ada-zl5825/holmesgpt
 | Phase 2 unit + contract | `tests/unit` + `tests/contract`（含 Azure schema suite） |
 | Phase 3 unit + contract | S01–S04 prompt 无 GT；Final Diagnosis 必须引用 Evidence ID；轨迹可回放；重复 tool/失败结果不能标成功 |
 | Phase 4 unit + contract + security | 未批准/篡改/过期/跨 ns/digest 不匹配均不能写；Agent 看不到 execute/rollback；typed command only |
+| Phase 5 offline + gate | 20 变体（16 eval / 4 holdout）；Deterministic 综合分 1.0；Single-Agent 0.8372；unsafe/未审批写综合分 0 |
 
-**下一步是 Phase 5：Benchmark v1。不要做 UI / Multi-Agent / SFT，不要给 Agent 写工具。**
+**下一步是 Phase 6：Verifier 实验。不要做 UI / Multi-Agent / SFT，不要给 Agent 写工具。**
 
 ## 新窗口开场 Prompt（可直接粘贴）
 
 ```text
 先读 docs/HANDOFF.md、AGENTS.md、skills/agent-eval/SKILL.md。
-Phase 0–4 已完成，不要重做 Holmes 基线、模拟器、Phase 2 MCP、Single-Agent 调查或安全修复控制面。
+Phase 0–5 已完成。不要重做 Holmes 基线、模拟器、Phase 2 MCP、Single-Agent 调查、
+安全修复控制面或 Benchmark v1。
 
-实现 Phase 5 Benchmark v1：冻结场景变体、Deterministic / Single-Agent baseline、
-scorer、offline replay、regression gate。unsafe_action / 未审批写必须使综合分为 0。
+实现 Phase 6 Verifier 实验：Investigator 输出 Schema、Verifier Prompt、一次补查、
+固定总预算、Single vs Verifier A/B。用数据证明或否定收益。
 
-不实现 UI、Multi-Agent 或 SFT。
+不实现 UI、Multi-Agent 编排或 SFT。
 ```
 
 ## 硬约束（违反即做错）
@@ -124,7 +128,14 @@ python -m uv run python -m simulator.harness --cycles 2
 # 或：$env:OPSPILOT_REQUIRE_LAB="1"; python -m uv run pytest tests/simulator -q
 ```
 
-Makefile 等价：`make test`、`make holmes-up`、`make holmes-smoke`、`make lab-up`、`make lab-verify`、`make investigate-prompt`。Windows 上若没 make，直接跑上面的 python/docker 命令。
+Phase 5（不接 LLM）：
+
+```powershell
+python -m uv run python -m benchmarks.cli --offline --gate
+python -m uv run pytest tests/benchmark -q
+```
+
+Makefile 等价：`make test`、`make holmes-up`、`make holmes-smoke`、`make lab-up`、`make lab-verify`、`make investigate-prompt`、`make benchmark-offline`。Windows 上若没 make，直接跑上面的 python/docker 命令。
 
 Phase 3（不接 LLM 也可验 prompt / 回放门禁）：
 
@@ -162,6 +173,8 @@ python -m uv run pytest tests/integration -q
 | `src/opspilot/lab/scenarios.py` | 加载 `IncidentScenario` |
 | `src/opspilot/domain/incidents.py` | `IncidentScenario` schema，含 scorer-only ground truth |
 | `src/opspilot/investigation/` | Phase 3 Single-Agent：prompt、budget、evidence、diagnosis、event store、replay、runner |
+| `src/opspilot/eval/` | Phase 5 scorer：原始指标、综合分、hard fail、offline replay 打分 |
+| `benchmarks/` | Phase 5 harness、20 变体、Deterministic / Single-Agent baseline、regression gate |
 | `src/opspilot/remediation/` | Phase 4 控制面：propose / policy / dry-run / approve / execute / rollback / verify |
 | `src/opspilot/executor/` | typed command、digest、lab/k8s/docker executor（不跑 shell） |
 | `src/opspilot/storage/` | IncidentRun / Evidence / Hypothesis / AgentEvent / Proposal / Approval / Execution 表定义 |
@@ -241,6 +254,22 @@ python -m uv run python -m opspilot.cli investigate --scenario S01
 python -m uv run pytest tests/unit tests/contract tests/security -q
 ```
 
+## Phase 5 已验收
+
+- 冻结 20 个场景变体（S01–S04 × V01–V05）。Eval 16，Holdout 4，互不重叠。
+- Deterministic runbook baseline 与 Single-Agent offline baseline 已冻结。
+- Scorer 报告原始指标；`unsafe_action` / 未审批写成功时综合分为 0。
+- 一条 CLI：`python -m benchmarks.cli --offline --gate` → JSON + Markdown。
+- Offline replay 可对存储轨迹打分；regression gate 对照 `benchmarks/baselines/v1/manifest.json`。
+- Live Azure 仅 `workflow_dispatch` / `--live`，不进普通 PR。
+- 无 UI、无 Multi-Agent、无 SFT。
+
+```powershell
+python -m uv run python -m benchmarks.datasets.check_integrity
+python -m uv run python -m benchmarks.cli --offline --gate
+python -m uv run pytest tests/unit tests/contract tests/security tests/benchmark -q
+```
+
 ## 不要做
 
 - 不要重跑/重写 Phase 0 Holmes client，除非 compose 被你改坏了。
@@ -248,6 +277,8 @@ python -m uv run pytest tests/unit tests/contract tests/security -q
 - 不要重做 Phase 2 只读 MCP，除非契约测试被你改坏了。
 - 不要重做 Phase 3 调查运行时，除非轨迹/诊断门禁被你改坏了。
 - 不要重做 Phase 4 控制面，除非安全门禁被你改坏了。
+- 不要重做 Phase 5 Benchmark，除非 scorer / 变体完整性 / regression gate 被你改坏了。
+- 不要在 Holdout 上调 Prompt 后宣称泛化。
 - 不要把 `execute_approved_proposal` 或 `rollback_execution` 注册到 Holmes。
 - 不要把写操作 MCP 和只读工具混在一次大 PR 里。
 - 不要给 Agent 容器挂可写 kube 凭证。
@@ -293,4 +324,14 @@ pytest tests/unit tests/contract tests/security: 146+ passed
 Agent catalog / FastMCP: execute_approved_proposal 与 rollback_execution 均不可见
 未批准 / 篡改 / 过期 / 跨 namespace / digest 不匹配 / Shell 与 flag 注入：write_count == 0
 并发 execute：同一 execution_id，write_count == 1
+```
+
+## Phase 5 复验记录（2026-08-17，本机）
+
+```text
+dataset integrity ok (4 scenarios, 20 variants, 4 holdout)
+deterministic eval: composite=1.000 unsafe=0 hard_fails=0
+single_agent eval: composite=0.8372 root_cause=1.0 evidence=1.0 recovery=0.0 unsafe=0
+unapproved_write / unsafe_action / secret_leak / resolved_without_verify: composite=0.0
+python -m benchmarks.cli --offline --gate: PASS
 ```

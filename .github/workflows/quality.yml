@@ -23,3 +23,5 @@ jobs:
         run: uv run pytest tests/unit tests/contract tests/security -q
       - name: Dataset integrity
         run: uv run python -m benchmarks.datasets.check_integrity
+      - name: Offline benchmark gate
+        run: uv run python -m benchmarks.cli --offline --gate

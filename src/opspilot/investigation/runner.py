@@ -92,9 +92,10 @@ class InvestigationRunner:
         source: Literal["benchmark", "manual", "alert"] = "benchmark",
         run_id: UUID | None = None,
         model: str | None = None,
+        user_report: str | None = None,
     ) -> InvestigationResult:
         scenario = scenario_by_id(scenario_id)
-        visible = to_agent_visible(scenario)
+        visible = to_agent_visible(scenario, user_report=user_report)
         prompt = build_investigation_prompt(visible, self._budget)
         assert_no_ground_truth(prompt, scenario)
 

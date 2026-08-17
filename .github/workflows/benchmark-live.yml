@@ -11,5 +11,6 @@ jobs:
       - name: Guard
         run: |
           echo "Live Azure benchmark is manual-only. Do not run on ordinary PRs."
-          echo "Implement in Phase 5."
+          echo "Local: python -m benchmarks.cli --live --scenario S01"
+          echo "Requires lab + holmes profiles and Azure credentials in .env."
           exit 0

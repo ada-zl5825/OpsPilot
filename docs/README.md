@@ -11,6 +11,6 @@
 | [05_BENCHMARK.md](05_BENCHMARK.md) | 评测指标与门禁 |
 | [06_OPERATIONS.md](06_OPERATIONS.md) | 本地启动与阶段命令 |
 | [07_UPSTREAM_CONTRIBUTION.md](07_UPSTREAM_CONTRIBUTION.md) | HolmesGPT 上游 PR 路线 |
-| [08_EXPERIMENT_REPORT.md](08_EXPERIMENT_REPORT.md) | 实验报告占位 |
-| [HANDOFF.md](HANDOFF.md) | 新窗口交接：Phase 0–4 已完成，从 Phase 5 接着做 |
+| [08_EXPERIMENT_REPORT.md](08_EXPERIMENT_REPORT.md) | Benchmark v1 离线实验报告 |
+| [HANDOFF.md](HANDOFF.md) | 新窗口交接：Phase 0–5 已完成，下一步是 Phase 6 Verifier |
 | [UPSTREAM_BASELINE.md](UPSTREAM_BASELINE.md) | Phase 0 验收记录（已完成） |
