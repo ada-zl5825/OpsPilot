@@ -75,6 +75,42 @@ class LabClient:
         response.raise_for_status()
         return _json_object(response)
 
+    def prometheus_has_recent_checkout_traffic(self) -> bool:
+        try:
+            payload = self.prometheus_query(
+                'sum(increase(http_requests_total{service="checkout"}[1m]))'
+            )
+        except (httpx.HTTPError, ValueError, TypeError):
+            return False
+        for series in payload.get("data", {}).get("result", []):
+            value = series.get("value", [None, "0"])
+            if len(value) < 2:
+                continue
+            try:
+                if float(value[1]) > 0:
+                    return True
+            except (TypeError, ValueError):
+                continue
+        return False
+
+    def loki_has_recent_service_logs(self, service: str = "checkout") -> bool:
+        queries = (f'{{service_name="{service}"}}', f'{{service="{service}"}}')
+        for query in queries:
+            try:
+                response = self._http.get(
+                    f"{LOKI_URL}/loki/api/v1/query",
+                    params={"query": query, "limit": "5"},
+                    timeout=5.0,
+                )
+                if response.status_code != 200:
+                    continue
+                results = response.json().get("data", {}).get("result", [])
+                if results:
+                    return True
+            except (httpx.HTTPError, ValueError, TypeError):
+                continue
+        return False
+
     def loki_has(self, token: str) -> bool:
         queries = (
             f'{{service_name="checkout"}} |= `{token}`',

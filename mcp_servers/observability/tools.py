@@ -38,8 +38,16 @@ def query_service_metrics(
     def _run() -> dict[str, Any]:
         query = render_metric_query(parsed, window)
         points = backend.query_range(query, window, parsed.limit)
+        path_ignored = False
+        if parsed.path and not points:
+            fallback = parsed.model_copy(update={"path": ""})
+            points = backend.query_range(
+                render_metric_query(fallback, window), window, parsed.limit
+            )
+            path_ignored = bool(points)
         values = [float(point["v"]) for point in points]
-        return {
+        empty = not points
+        payload: dict[str, Any] = {
             "ok": True,
             "tool": tool,
             "service": parsed.service,
@@ -47,8 +55,25 @@ def query_service_metrics(
             "aggregation": parsed.aggregation,
             "time_range": window.as_dict(),
             "aggregated_value": _aggregate(values, parsed.aggregation, window),
+            "peak_value": round(max(values), 6) if values else None,
+            "point_count": len(points),
+            "empty": empty,
+            "path": "" if path_ignored else parsed.path,
+            "path_requested": parsed.path,
+            "path_ignored": path_ignored,
             "points": points,
         }
+        if window.end_extended:
+            payload["end_extended"] = True
+        if empty:
+            payload["suggested_fix"] = (
+                "omit path and retry; empty series is not evidence that the service is healthy"
+            )
+        elif path_ignored:
+            payload["suggested_fix"] = (
+                "no series matched the requested path; returned service-wide series"
+            )
+        return payload
 
     return invoke_tool(tool, _run, runtime, params=parsed.model_dump(), time_range=window.as_dict())
 
@@ -78,15 +103,23 @@ def query_service_logs(
             contains=parsed.contains,
             limit=parsed.limit,
         )
-        return {
+        payload: dict[str, Any] = {
             "ok": True,
             "tool": tool,
             "service": parsed.service,
             "severity": parsed.severity,
             "time_range": window.as_dict(),
             "returned": len(entries),
+            "empty": not entries,
             "entries": entries,
         }
+        if window.end_extended:
+            payload["end_extended"] = True
+        if not entries:
+            payload["suggested_fix"] = (
+                "try severity=all or a wider window; zero lines is not proof there is no incident"
+            )
+        return payload
 
     return invoke_tool(tool, _run, runtime, params=parsed.model_dump(), time_range=window.as_dict())
 
@@ -135,11 +168,12 @@ def get_trace_summary(
             limit=parsed.limit,
         )
         durations = [int(item.get("duration_ms", 0)) for item in traces]
-        return {
+        payload: dict[str, Any] = {
             "ok": True,
             "tool": tool,
             "time_range": window.as_dict(),
             "returned": len(traces),
+            "empty": not traces,
             "summary": {
                 "count": len(traces),
                 "p95_duration_ms": _percentile(durations, 0.95),
@@ -147,6 +181,13 @@ def get_trace_summary(
             },
             "traces": traces,
         }
+        if window.end_extended:
+            payload["end_extended"] = True
+        if not traces:
+            payload["suggested_fix"] = (
+                "widen the window or omit min_duration_ms; empty traces are not a healthy signal"
+            )
+        return payload
 
     return invoke_tool(tool, _run, runtime, params=parsed.model_dump(), time_range=window.as_dict())
 
@@ -159,7 +200,8 @@ def _aggregate(values: list[float], aggregation: str, window: TimeWindow) -> flo
     if aggregation == "p95":
         return round(_percentile(values, 0.95), 6)
     if aggregation == "rate":
-        return round((values[-1] - values[0]) / max(window.duration_seconds, 1.0), 6)
+        # PromQL templates already apply rate()/ratio. Do not treat points as a counter.
+        return round(mean(values), 6)
     return round(mean(values), 6)
 
 

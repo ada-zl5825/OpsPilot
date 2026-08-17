@@ -1,3 +1,4 @@
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -26,6 +27,21 @@ def test_time_range_rejects_inverted_and_oversized_windows() -> None:
     with pytest.raises(ValueError, match="at most"):
         parse_time_range("2026-08-17T00:00:00Z", "2026-08-18T00:00:00Z")
     assert MAX_WINDOW_SECONDS == 6 * 60 * 60
+
+
+def test_recent_end_snaps_to_now() -> None:
+    now = datetime.now(UTC)
+    start = (now - timedelta(minutes=10)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    end = (now - timedelta(seconds=45)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    window = parse_time_range(start, end)
+    assert window.end_extended is True
+    assert (now - window.end).total_seconds() < 5
+
+
+def test_historical_end_is_not_snapped() -> None:
+    window = parse_time_range("2026-01-01T09:00:00Z", "2026-01-01T10:00:00Z")
+    assert window.end_extended is False
+    assert window.end.hour == 10
 
 
 def test_structured_error_has_required_fields() -> None:

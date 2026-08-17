@@ -7,10 +7,14 @@ from mcp_servers.common.time_range import TimeWindow
 
 class FakeMetricsBackend:
     def __init__(self, points: list[dict[str, Any]] | None = None, sleep_s: float = 0) -> None:
-        self.points = points or [
-            {"t": 1_700_000_000.0, "v": 0.12},
-            {"t": 1_700_000_060.0, "v": 0.18},
-        ]
+        self.points = (
+            list(points)
+            if points is not None
+            else [
+                {"t": 1_700_000_000.0, "v": 0.12},
+                {"t": 1_700_000_060.0, "v": 0.18},
+            ]
+        )
         self.sleep_s = sleep_s
         self.last_query = ""
 

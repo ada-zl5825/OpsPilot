@@ -121,31 +121,29 @@ class LiveLogsBackend:
         contains: str,
         limit: int,
     ) -> list[dict[str, Any]]:
-        query = _loki_query(service, severity, contains)
-        params = {
-            "query": query,
-            "start": _nano(window.start.timestamp()),
-            "end": _nano(window.end.timestamp()),
-            "limit": str(limit),
-        }
-        payload = _get_json(self._base_url, "/loki/api/v1/query_range", params, self._timeout)
-        if payload.get("status") != "success":
-            raise BackendError("loki query failed")
-        entries: list[dict[str, Any]] = []
-        for stream in payload.get("data", {}).get("result", []):
-            labels = stream.get("stream", {})
-            for ts, line in stream.get("values", []):
-                entries.append(
-                    {
-                        "ts": ts,
-                        "service": labels.get("service_name") or labels.get("service") or service,
-                        "severity": _infer_severity(line, severity),
-                        "message": line,
-                    }
+        last_error: BackendError | None = None
+        for query in iter_loki_queries(service, severity, contains):
+            params = {
+                "query": query,
+                "start": _nano(window.start.timestamp()),
+                "end": _nano(window.end.timestamp()),
+                "limit": str(limit),
+            }
+            try:
+                payload = _get_json(
+                    self._base_url, "/loki/api/v1/query_range", params, self._timeout
                 )
-                if len(entries) >= limit:
-                    return entries
-        return entries
+            except BackendError as exc:
+                last_error = exc
+                continue
+            if payload.get("status") != "success":
+                continue
+            entries = _loki_entries(payload, service, severity, limit)
+            if entries:
+                return entries
+        if last_error is not None:
+            raise last_error
+        return []
 
 
 class LiveTracesBackend:
@@ -229,14 +227,50 @@ def live_backends(timeout: float) -> tuple[LiveMetricsBackend, LiveLogsBackend, 
     )
 
 
-def _loki_query(service: str, severity: str, contains: str) -> str:
-    query = f'{{service_name="{service}"}}'
-    if severity != "all":
-        query += f' |~ "(?i){severity}"'
+def iter_loki_queries(service: str, severity: str, contains: str) -> list[str]:
+    """Candidate LogQL queries. Azure often filters on a word that is only in stdout JSON."""
+    selectors = (f'{{service_name="{service}"}}', f'{{service="{service}"}}')
+    if severity == "all":
+        filters = [""]
+    else:
+        filters = [
+            f' |~ "(?i){severity}"',
+            f' | json | level=~"(?i){severity}"',
+            f' | detected_level=~"(?i){severity}"',
+        ]
+    contains_suffix = ""
     if contains:
         escaped = contains.replace("`", "").replace("\\", "")
-        query += f" |= `{escaped}`"
-    return query
+        contains_suffix = f" |= `{escaped}`"
+    queries: list[str] = []
+    for selector in selectors:
+        for line_filter in filters:
+            queries.append(f"{selector}{line_filter}{contains_suffix}")
+    return queries
+
+
+def _loki_query(service: str, severity: str, contains: str) -> str:
+    return iter_loki_queries(service, severity, contains)[0]
+
+
+def _loki_entries(
+    payload: dict[str, Any], service: str, severity: str, limit: int
+) -> list[dict[str, Any]]:
+    entries: list[dict[str, Any]] = []
+    for stream in payload.get("data", {}).get("result", []):
+        labels = stream.get("stream", {})
+        for ts, line in stream.get("values", []):
+            entries.append(
+                {
+                    "ts": ts,
+                    "service": labels.get("service_name") or labels.get("service") or service,
+                    "severity": _infer_severity(line, severity),
+                    "message": line,
+                }
+            )
+            if len(entries) >= limit:
+                return entries
+    return entries
 
 
 def _get_json(base_url: str, path: str, params: dict[str, Any], timeout: float) -> dict[str, Any]:

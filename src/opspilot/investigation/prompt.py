@@ -69,15 +69,22 @@ Read-only tools:
 
 Tool parameter rules:
 - Time ranges must be ISO-8601 start/end, at least 60 seconds and at most 6 hours.
-- Prefer the last 30 minutes unless evidence points to an earlier window.
+- Prefer a short recent window (about 10 minutes) when the incident just started.
+- Set end to the current UTC time. Do not round end to a clock minute that excludes now.
+- Use a longer window only if the short window is empty.
 - Services must be one of: {services}.
+- Omit unused optional fields. Do not send JSON null.
+- Omit path unless a previous successful result showed that exact path label.
+- Query more than error_rate. Use the metric names listed in the tool schema.
+- Empty points, aggregated_value null, or returned=0 is not proof the service is healthy.
+- If a result includes suggested_fix, follow it before concluding.
 - Do not pass raw PromQL, LogQL, or shell strings.
 
 Budgets (the control plane will stop you if you exceed them):
 - max investigation turns: {budget.max_steps}
-- max tool calls: {budget.max_tool_calls}
-- max calls of the same tool: {budget.max_repeats_per_tool}
-- max identical tool+query repeats: {budget.max_repeats_per_query}
+- max tool calls: {budget.max_tool_calls} (every attempt counts, including failures)
+- max identical successful tool+query repeats: {budget.max_repeats_per_query}
+- the same tool with different services or metrics is allowed
 - stop if several calls add no new facts
 {evidence_block}
 When you finish, output a single JSON object (optional markdown fence) with this schema:
@@ -117,6 +124,7 @@ Successful evidence collected so far:
 
 If evidence is sufficient, output only the Final Diagnosis JSON using the assigned Evidence IDs.
 If not, call a different read-only tool that can add a new fact. Do not repeat an identical query.
+Empty points or returned=0 is not a conclusion. Omit path, change the metric name, or use severity=all.
 Failed tool results are not evidence.
 """
     assert_agent_text_is_safe(prompt)

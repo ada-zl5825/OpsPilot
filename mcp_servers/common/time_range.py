@@ -6,12 +6,14 @@ from datetime import UTC, datetime, timedelta
 MIN_WINDOW_SECONDS = 60
 MAX_WINDOW_SECONDS = 6 * 60 * 60
 FUTURE_SLACK = timedelta(minutes=5)
+RECENT_END_SNAP_SECONDS = 120
 
 
 @dataclass(frozen=True)
 class TimeWindow:
     start: datetime
     end: datetime
+    end_extended: bool = False
 
     @property
     def duration_seconds(self) -> float:
@@ -61,6 +63,9 @@ def parse_time_range(start: str, end: str) -> TimeWindow:
     now = datetime.now(UTC)
     if window.end > now + FUTURE_SLACK:
         raise ValueError("end cannot be more than 5 minutes in the future")
+    gap = (now - window.end).total_seconds()
+    if 0 < gap <= RECENT_END_SNAP_SECONDS:
+        return TimeWindow(start=window.start, end=now, end_extended=True)
     return window
 
 

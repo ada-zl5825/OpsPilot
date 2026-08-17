@@ -34,3 +34,5 @@ def test_prompts_for_s01_s04_exclude_ground_truth() -> None:
         assert "execute_approved_proposal" not in prompt
         assert "query_service_metrics" in prompt
         assert "Final Diagnosis" in prompt or "evidence_ids" in prompt
+        assert "Omit path" in prompt
+        assert "clock minute" in prompt
