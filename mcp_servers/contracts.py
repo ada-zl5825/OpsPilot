@@ -151,6 +151,20 @@ TOOL_CATALOG: list[ToolContract] = [
 
 
 PHASE2_SERVERS = frozenset({"observability", "deployments", "runbooks"})
+PHASE4_SERVER = "remediation"
+AGENT_REMEDIATION_TOOLS = frozenset(
+    {
+        "get_remediation_capabilities",
+        "dry_run_remediation",
+        "get_resource_snapshot",
+        "verify_recovery",
+        "propose_rollback_deployment",
+        "propose_restart_workload",
+        "propose_scale_workload",
+        "propose_update_config",
+    }
+)
+HIDDEN_MUTATE_TOOLS = frozenset({"execute_approved_proposal", "rollback_execution"})
 
 
 def agent_visible_tools() -> list[ToolContract]:
@@ -163,6 +177,14 @@ def mutate_tools() -> list[ToolContract]:
 
 def phase2_tools() -> list[ToolContract]:
     return [tool for tool in TOOL_CATALOG if tool["server"] in PHASE2_SERVERS]
+
+
+def phase4_agent_tools() -> list[ToolContract]:
+    return [
+        tool
+        for tool in TOOL_CATALOG
+        if tool["server"] == PHASE4_SERVER and tool["agent_visible"]
+    ]
 
 
 def tool_by_name(name: str) -> ToolContract:
